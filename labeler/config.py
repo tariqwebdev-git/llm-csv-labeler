@@ -12,7 +12,9 @@ PRICE_CACHED_INPUT_PER_1M = 0.075
 PRICE_OUTPUT_PER_1M = 0.60
 
 # --- Batching and speed ------------------------------------------------------
-BATCH_SIZE = 50            # rows per request; lower to 25 if parsing errors appear
+BATCH_SIZE = 10            # max rows per request; >20 lets answers drift between items (tested)
+MAX_BATCH_ITEM_TOKENS = 1000  # max text tokens per request; keeps long texts in small
+                              # batches so answers do not drift between items
 MAX_CONCURRENT = 10        # requests in flight at once; lower if you hit rate limits
 TEMPERATURE = 0            # same row -> same answer
 MAX_RETRIES = 3            # retries on rate limits / timeouts (SDK exponential backoff)
@@ -21,6 +23,8 @@ REQUEST_TIMEOUT_SECONDS = 60
 # --- Rows --------------------------------------------------------------------
 MAX_ROW_CHARS = 2000       # longer text is trimmed and noted "trimmed"
 SOFT_ROW_LIMIT = 10_000    # warn above this many rows
+EMPTY_WARNING_SHARE = 0.20 # strong warning if more than this share of rows is empty
+QUERY_MIN_WORDS = 3        # warn when a query is shorter (short queries are often misread)
 
 # --- Interface ---------------------------------------------------------------
 PREVIEW_ROWS = 10          # rows shown after upload
