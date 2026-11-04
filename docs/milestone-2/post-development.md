@@ -34,4 +34,21 @@ Both are still well inside the plan's targets (under 2 minutes, a few cents).
 - Cache results made under the old batching were cleared locally. Alex's machine has no old cache.
 - The cache key doesn't include batch settings. After changing batching, use **Clear cache** (Part B adds the button).
 
-## Part B: Query cards (pending)
+## Part B: Query cards and control (done)
+- **Query cards** (`ui/query_card.py`): the short name is the title, the full text sits underneath, then the status and a shaded result box ("X of Y matched, Z not labelled", notes, cost, time). Buttons: **Edit / Test (20 rows) / Run / Delete**.
+- **Test run:** 20 fixed-seed rows, shown as Matched, Not matched and Not labelled tables, plus the cost.
+- **Full run:** an estimate is shown on every card (cached per file, column and wording), then a progress bar. The status becomes Done, or **Done with errors** if any row was refused, blocked or failed.
+- **Edit:** the wording changes in place. A Done query becomes **Out of date** and drops out of the download until it's re-run.
+- **Delete** asks for confirmation.
+- **Column names** never clash with CSV columns or with other queries' `_conf` / `_note` columns.
+- **Preview order:** rows needing attention first, then lowest confidence, empty rows last.
+- **Save/load queries** as JSON; loaded queries arrive as "Not run" cards and nothing runs automatically.
+- **Sidebar:** a Clear cache button.
+- A new CSV or column clears the results and keeps the queries.
+- **Download** includes every Done / Done-with-errors query.
+- State rules live in `ui/query_actions.py` (no drawing) and table shaping in `ui/result_tables.py`. `ui/query_section.py` was replaced.
+- **Tests:** 60 pass, including 11 AppTest UI tests (cards, test run, run, edit, delete, JSON load, download, warnings) and 4 state-rule tests.
+
+## Pending (Day 4)
+- A manual browser check plus screenshots for Alex.
+- Day 4 hardening: README final, code-comment pass, screen recording, Alex's real data, the accuracy target from Alex's 20 hand-labelled rows.
