@@ -14,6 +14,7 @@ streamlit run app.py
 python scripts/run_labeling_cli.py --help                             # headless run + accuracy check
 pytest
 python sample_data/make_sample.py                                      # regenerate synthetic data
+python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   # 5k-row stress test (~$0.19, capped by --max-spend)
 ```
 
 ## Architecture (full detail: docs/architecture.md)

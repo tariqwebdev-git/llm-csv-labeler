@@ -100,6 +100,7 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
         unique_labels: list[RowLabel | None] = [cached.get(key) for key in keys]
         todo = [i for i, label in enumerate(unique_labels) if label is None]
         usage = TokenUsage()
+        requests_sent = 0
 
         if todo:
             client = classifier or OpenAIClassifier(api_key, model)
@@ -117,6 +118,7 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
             for i, label in output.labels.items():
                 unique_labels[todo[i]] = label
             usage = output.usage
+            requests_sent = output.requests_sent
 
     row_labels = _labels_per_row(prepared, unique_labels)
     stats = RunStats(
@@ -126,6 +128,7 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
         note_counts=dict(Counter(r.note.value for r in row_labels if r.note)),
         rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
         texts_sent=len(todo),
+        requests_sent=requests_sent,
         usage=usage,
         cost_usd=cost_usd(usage),
         seconds=round(time.perf_counter() - started, 2),
