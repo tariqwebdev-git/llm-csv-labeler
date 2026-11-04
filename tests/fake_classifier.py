@@ -3,6 +3,7 @@ import math
 from collections.abc import Callable
 
 from labeler.models import LLMReply, TokenLogprob, TokenUsage
+from labeler.prompt_builder import ITEMS_CLOSE, ITEMS_OPEN
 
 BLOCK = "BLOCK"   # answer that makes the whole request content-filtered
 SKIP = None       # answer that leaves the row out of the reply (like a refusal)
@@ -21,7 +22,8 @@ class FakeClassifier:
         self.calls: list[list[str]] = []
 
     async def classify(self, system_prompt: str, user_prompt: str, max_output_tokens: int) -> LLMReply:
-        items = [line.split("|", 1)[1] for line in user_prompt.split("Items:\n", 1)[1].splitlines()]
+        block = user_prompt.split(f"{ITEMS_OPEN}\n", 1)[1].rsplit(f"\n{ITEMS_CLOSE}", 1)[0]
+        items = [line.split("|", 1)[1] for line in block.splitlines()]
         self.calls.append(items)
         if self.error:
             raise self.error
