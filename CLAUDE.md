@@ -9,7 +9,7 @@ A local Streamlit app for Alex Loewi (Upwork client). He uploads a CSV, picks a 
 
 ## Commands
 ```
-python -m venv venv && venv/Scripts/pip install -r requirements.txt   # Windows dev
+python -m venv venv && venv/Scripts/pip install -r requirements.txt   # Windows dev (macOS: venv/bin/pip)
 streamlit run app.py
 python scripts/run_labeling_cli.py --help                             # headless run + accuracy check
 pytest
@@ -20,7 +20,8 @@ python sample_data/make_sample.py                                      # regener
 - `app.py` + `ui/`: Streamlit only. They never call OpenAI, SQLite or the file system directly. They call `labeler.labeling_engine`.
 - `labeler/`: core logic, with no Streamlit imports (so it can be reused by a future hosted version).
 - `openai_client.py` is the only file that talks to OpenAI.
-- Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`.
+- Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: `gpt-4o-mini` (gpt-4.1-nano is deprecated).
+- Tests use `tests/fake_classifier.py` (no API cost). Live checks use the CLI with `--limit`.
 
 ## Code rules
 - One responsibility per file. Types go only in `models.py`, exceptions only in `errors.py`, settings only in `config.py`. Never mix them into logic files.
