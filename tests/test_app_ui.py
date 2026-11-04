@@ -1,12 +1,15 @@
 """UI tests with Streamlit AppTest. OpenAI is replaced by FakeClassifier (no cost)."""
+import json
 from pathlib import Path
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
-import ui.query_section as query_section
+import ui.query_card as query_card
 from labeler import labeling_engine
+from labeler.models import QueryStatus
 from tests.fake_classifier import FakeClassifier
+from ui.download_section import labeled_table
 
 ROOT = Path(__file__).resolve().parent.parent
 SAMPLE = (ROOT / "sample_data" / "sample.csv").read_bytes()
@@ -18,13 +21,12 @@ def make_app(monkeypatch, tmp_path):
     monkeypatch.setattr("labeler.config.CACHE_PATH", tmp_path / "cache.db")
     fake = FakeClassifier()
     real_run = labeling_engine.run_query
-    monkeypatch.setattr(query_section, "run_query",
+    monkeypatch.setattr(query_card, "run_query",
                         lambda texts, query, **kw: real_run(texts, query, **{**kw, "classifier": fake}))
 
     def build(api_key: str | None = "test-key") -> AppTest:
         monkeypatch.setattr("labeler.api_key.load_api_key", lambda: api_key)
-        at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30)
-        return at.run()
+        return AppTest.from_file(str(ROOT / "app.py"), default_timeout=60).run()
 
     return build
 
@@ -34,6 +36,20 @@ def _upload(at: AppTest, data: bytes = SAMPLE, name: str = "sample.csv") -> AppT
     return at.run()
 
 
+def _add(at: AppTest, text: str) -> AppTest:
+    at.text_area(key="new_query_text").input(text).run()
+    return at.button(key="add_query").click().run()
+
+
+def _state(at: AppTest):
+    return at.session_state["app_state"]
+
+
+def _click(at: AppTest, kind: str, index: int = 0) -> AppTest:
+    query_id = _state(at).queries[index].id
+    return at.button(key=f"{kind}_{query_id}").click().run()
+
+
 def test_upload_shows_preview_and_picks_text_column(make_app):
     at = _upload(make_app())
     assert not at.exception
@@ -41,23 +57,66 @@ def test_upload_shows_preview_and_picks_text_column(make_app):
     assert at.selectbox(key="text_column_select").value == "transportation_open"
 
 
+def test_add_two_queries_as_cards(make_app):
+    at = _add(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "Mentions buses being late")
+    names = [q.name for q in _state(at).queries]
+    assert names == ["person_hit_vehicle", "buses_being_late"]
+    assert not at.exception
+
+
 def test_run_disabled_without_key(make_app):
-    at = _upload(make_app(api_key=None))
-    at.text_area(key="query_text").input("hit by a vehicle").run()
-    assert at.button[0].disabled
+    at = _add(_upload(make_app(api_key=None)), "Mentions a person hit by a vehicle")
+    query_id = _state(at).queries[0].id
+    assert at.button(key=f"run_{query_id}").disabled
+    assert at.button(key=f"test_{query_id}").disabled
     assert any("API key missing" in e.value for e in at.sidebar.error)
 
 
-def test_run_labels_rows_and_shows_counts(make_app):
-    at = _upload(make_app())
-    at.text_area(key="query_text").input("hit by a vehicle").run()
-    assert at.text_input(key="query_name").value == "hit_vehicle"
-    at.button[0].click().run()
+def test_test_run_uses_20_rows(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "test")
+    state = _state(at)
+    query = state.queries[0]
+    assert len(state.test_runs[query.id].result.labels) == 20
+    assert query.status == QueryStatus.TESTED
 
+
+def test_full_run_counts_box_and_download(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    at = _add(at, "Mentions buses being late")
+    at = _click(_click(at, "run", 0), "run", 1)
     assert not at.exception
-    state = at.session_state["app_state"]
-    assert len(state.result.labels) == 220 and state.result_name == "hit_vehicle"
+    state = _state(at)
+    assert all(q.status == QueryStatus.DONE for q in state.queries)
     assert any("of 220 matched" in i.value for i in at.info)
+    table = labeled_table(state)
+    assert len(table) == 220
+    assert {"person_hit_vehicle", "person_hit_vehicle_conf", "buses_being_late_note"} <= set(table.columns)
+
+
+def test_edit_marks_out_of_date(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
+    at = _click(at, "edit")
+    query_id = _state(at).queries[0].id
+    at.text_area(key=f"edit_text_{query_id}").input("Mentions a person hit by a car").run()
+    at = at.button(key=f"save_{query_id}").click().run()
+    assert _state(at).queries[0].status == QueryStatus.OUT_OF_DATE
+    assert "person_hit_vehicle" not in labeled_table(_state(at)).columns
+
+
+def test_delete_needs_confirmation(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "delete")
+    assert len(_state(at).queries) == 1               # not yet deleted
+    at = _click(at, "confirm_yes")
+    assert _state(at).queries == []
+
+
+def test_load_queries_json_adds_not_run_cards(make_app):
+    at = _upload(make_app())
+    payload = json.dumps({"version": 1, "queries": [{"name": "kids", "text": "Stories about children"}]})
+    at.file_uploader(key="load_queries").set_value(("q.json", payload.encode(), "application/json"))
+    at = at.run()
+    queries = _state(at).queries
+    assert [(q.name, q.status) for q in queries] == [("kids", QueryStatus.NOT_RUN)]
 
 
 def test_bad_csv_shows_error_not_crash(make_app):
@@ -75,5 +134,5 @@ def test_empty_rows_warning_names_better_column(make_app):
 
 def test_short_query_warning(make_app):
     at = _upload(make_app())
-    at.text_area(key="query_text").input("accident").run()
+    at.text_area(key="new_query_text").input("accident").run()
     assert any("Short queries" in w.value for w in at.warning)
