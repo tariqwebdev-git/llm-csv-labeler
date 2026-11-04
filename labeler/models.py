@@ -96,9 +96,10 @@ class PreparedRows:
 
 @dataclass(frozen=True)
 class BatchRunOutput:
-    """What BatchRunner returns: labels by text index, plus tokens used."""
+    """What BatchRunner returns: labels by text index, tokens used, API calls made."""
     labels: dict[int, RowLabel]
     usage: TokenUsage
+    requests_sent: int              # includes retry calls
 
 
 @dataclass(frozen=True)
@@ -119,6 +120,7 @@ class RunStats:
     note_counts: dict[str, int]
     rows_from_cache: int
     texts_sent: int
+    requests_sent: int              # API calls incl. retries; > batches means retries happened
     usage: TokenUsage
     cost_usd: float
     seconds: float

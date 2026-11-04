@@ -37,6 +37,7 @@ def test_skipped_row_is_retried_alone_then_labelled(cache_path):
     result = _run(["a", "b hit", "c"], fake, cache_path)
     assert [r.label for r in result.labels] == [0, 1, 0]
     assert fake.calls[-1] == ["b hit"]
+    assert result.stats.requests_sent == 2          # 1 batch + 1 retry
 
 
 def test_always_refused_row_is_blank_with_note(cache_path):
