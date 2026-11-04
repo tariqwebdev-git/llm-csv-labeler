@@ -6,7 +6,7 @@ from labeler import config
 from labeler.column_utils import column_with_fewest_empty, count_empty, guess_text_column
 from labeler.csv_io import read_csv
 from labeler.errors import CsvReadError
-from ui.session import clear_result
+from ui.query_actions import reset_results
 from ui.ui_models import AppState
 
 _COLUMN_KEY = "text_column_select"
@@ -24,7 +24,7 @@ def render(state: AppState) -> None:
     if uploaded is None:
         if state.df is not None:
             state.df, state.file_id = None, ""
-            clear_result(state)
+            reset_results(state)
         return
 
     if uploaded.file_id != state.file_id:
@@ -33,12 +33,12 @@ def render(state: AppState) -> None:
         except CsvReadError as exc:
             st.error(str(exc))
             state.df, state.file_id = None, ""
-            clear_result(state)
+            reset_results(state)
             return
         state.df, state.file_id, state.file_name = df, uploaded.file_id, uploaded.name
         state.text_column = guess_text_column(df)
         st.session_state[_COLUMN_KEY] = state.text_column
-        clear_result(state)
+        reset_results(state)
 
     df = state.df
     st.write(f"**{len(df):,} rows**, {len(df.columns)} columns: {', '.join(df.columns)}")
@@ -49,7 +49,7 @@ def render(state: AppState) -> None:
     column = st.selectbox("Text column to label", list(df.columns), key=_COLUMN_KEY)
     if column != state.text_column:
         state.text_column = column
-        clear_result(state)
+        reset_results(state)
     _warn_empty_rows(df, column)
 
 

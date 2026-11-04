@@ -41,6 +41,9 @@ llm-csv-labeler/
 │   ├── session.py                # get_state() from st.session_state
 │   ├── sidebar.py                # key status, model, session spend, clear cache
 │   ├── upload_section.py         # upload, column picker, preview
+│   ├── query_actions.py          # state rules: add/edit/delete/record results (no drawing)
+│   ├── result_tables.py          # preview order, test-run split
+│   ├── query_list_section.py     # add-query form + all cards
 │   ├── query_card.py             # one card: edit, test, run, delete, stats box
 │   ├── query_file_section.py     # save/load queries JSON
 │   └── download_section.py       # labelled CSV download
