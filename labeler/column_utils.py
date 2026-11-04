@@ -3,6 +3,8 @@ import re
 
 import pandas as pd
 
+from labeler.prompt_builder import sanitize_text
+
 # Words dropped when suggesting a short column name from a query.
 _STOP_WORDS = frozenset({
     "a", "an", "the", "of", "about", "that", "which", "who", "all", "any",
@@ -36,6 +38,20 @@ def suggest_column_name(query_text: str) -> str:
     return to_column_name("_".join(keywords[:_MAX_SUGGESTED_WORDS]))
 
 
+def count_empty(df: pd.DataFrame, column: str) -> int:
+    """Rows with no usable text in `column` (same rule as the labeller: these are skipped)."""
+    return sum(1 for value in df[column] if not sanitize_text(str(value)))
+
+
+def column_with_fewest_empty(df: pd.DataFrame) -> str:
+    """The column that has text in the most rows; ties go to the longest average text."""
+    return min(df.columns, key=lambda col: (count_empty(df, col), -_average_length(df, col)))
+
+
+def _average_length(df: pd.DataFrame, column: str) -> float:
+    return df[column].astype(str).str.len().mean()
+
+
 def guess_text_column(df: pd.DataFrame) -> str:
     """The column with the longest average text: most likely the free-text answers."""
-    return max(df.columns, key=lambda col: df[col].astype(str).str.len().mean())
+    return max(df.columns, key=lambda col: _average_length(df, col))
