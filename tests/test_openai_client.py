@@ -65,3 +65,18 @@ def test_rejected_key_stops_run(tmp_path):
     with pytest.raises(ApiKeyError) as err:
         _run(classifier, tmp_path)
     assert "sk-123" not in str(err.value)       # the key is never echoed
+
+
+def test_reasoning_effort_sent_only_when_configured(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr("labeler.config.REASONING_EFFORT", None)      # older chat model
+    classifier, calls = _classifier([httpx2.Response(200, json=_completion("1|1"))])
+    _run(classifier, tmp_path)
+    assert "reasoning_effort" not in json.loads(calls[0].content)
+
+    monkeypatch.setattr("labeler.config.REASONING_EFFORT", "none")
+    classifier, calls = _classifier([httpx2.Response(200, json=_completion("1|1"))])
+    (tmp_path / "other").mkdir()
+    _run(classifier, tmp_path / "other")
+    body = json.loads(calls[0].content)
+    assert body["reasoning_effort"] == "none" and body["logprobs"] is True

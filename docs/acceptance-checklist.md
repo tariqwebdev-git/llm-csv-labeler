@@ -42,13 +42,16 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 | Item | Status | Evidence |
 |---|---|---|
 | 1,000 rows finish in under 2 minutes per query | ✅ | ~15 s per 1,000 rows (5,000 rows in 70 s) |
-| Actual cost for 1,000 rows is a few cents per query | ✅ | ~$0.013 per 1,000 rows (`gpt-4o-mini`) |
+| Actual cost for 1,000 rows is a few cents per query | ✅ | ~$0.009 per 1,000 rows (`gpt-6-luna`) |
 
 ## Handover
 | Item | Status | Evidence |
 |---|---|---|
-| Alex installs and runs the app from the README on his machine | ⏳ | README has macOS steps; needs Alex |
+| Alex installs and runs the app from the README on his machine | ⏳ | README has macOS steps (Python 3.12+); pinned `requirements.txt` verified with a fresh install; needs Alex |
 | Alex can change the model, batch size and test size in `config.py` | ✅ | Settings table in the README; every setting is commented in `config.py` |
+
+## Model lifetime
+Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previous default `gpt-4o-mini` shuts down 2027-01-14. To change model: `config.py` (`MODEL`, `REASONING_EFFORT`, the 3 prices), then `python scripts/run_eval.py --model <name>`.
 
 ## Open items for Alex
 1. Send the real CSV and 2–3 queries with 20 hand-labelled rows each, and choose the accuracy target X.
