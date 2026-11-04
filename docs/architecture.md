@@ -46,6 +46,7 @@ llm-csv-labeler/
 │   ├── config.py                 # settings only: model, prices, batch size, limits
 │   ├── models.py                 # types only: dataclasses and enums
 │   ├── errors.py                 # exception classes only
+│   ├── api_key.py                # load OPENAI_API_KEY from .env
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
 │   ├── openai_client.py          # the only OpenAI caller
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence
