@@ -9,6 +9,8 @@ from labeler.labeling_engine import estimate_cost, run_query
 from labeler.output_builder import CONFIDENCE_SUFFIX, add_result_columns
 from ui.ui_models import AppState
 
+QUERY_HINT = ("Write a full sentence describing what counts, e.g. 'Describes a person getting "
+              "hurt in an accident, such as being hit by a vehicle'.")
 _QUERY_KEY = "query_text"
 _NAME_KEY = "query_name"
 
@@ -24,7 +26,11 @@ def render(state: AppState, api_key: str | None) -> None:
         "Query", key=_QUERY_KEY, on_change=_suggest_name,
         placeholder="e.g. Mentions a person getting hit by a car or other vehicle",
     ).strip()
-    name = st.text_input("Column name", key=_NAME_KEY)
+    st.caption(QUERY_HINT)
+    if query and len(query.split()) < config.QUERY_MIN_WORDS:
+        st.warning("Short queries are often misread. Describe what counts in a full sentence, "
+                   "and test on 20 rows first.")
+    name = st.text_input("New column name (for results)", key=_NAME_KEY)
 
     if state.df is None or not state.text_column:
         st.info("Upload a CSV and choose a text column first.")

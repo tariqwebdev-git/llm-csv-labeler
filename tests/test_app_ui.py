@@ -64,3 +64,16 @@ def test_bad_csv_shows_error_not_crash(make_app):
     at = _upload(make_app(), data=b"a,b\n", name="empty.csv")
     assert not at.exception
     assert any("no data rows" in e.value for e in at.error)
+
+
+def test_empty_rows_warning_names_better_column(make_app):
+    data = b"id,notes,answer\n1,,long answer one\n2,,long answer two\n3,x,long answer three\n"
+    at = _upload(make_app(), data=data, name="mixed.csv")
+    at.selectbox(key="text_column_select").select("notes").run()
+    assert any("2 of 3 rows are empty" in e.value and "`answer`" in e.value for e in at.error)
+
+
+def test_short_query_warning(make_app):
+    at = _upload(make_app())
+    at.text_area(key="query_text").input("accident").run()
+    assert any("Short queries" in w.value for w in at.warning)

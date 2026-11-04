@@ -12,6 +12,7 @@ Recovery rules (never guess a label):
 import asyncio
 
 from labeler import config
+from labeler.batch_planner import plan_batches
 from labeler.errors import ApiCallError
 from labeler.models import (
     BatchLabelledCallback,
@@ -52,10 +53,7 @@ class BatchRunner:
         on_batch_labelled: BatchLabelledCallback | None = None,
     ) -> BatchRunOutput:
         """Label every text. Returns {text_index: RowLabel} and total token usage."""
-        batches = [
-            list(range(start, min(start + self._batch_size, len(texts))))
-            for start in range(0, len(texts), self._batch_size)
-        ]
+        batches = plan_batches(texts, max_rows=self._batch_size)
         labels: dict[int, RowLabel] = {}
         done = 0
 

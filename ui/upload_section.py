@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 from labeler import config
-from labeler.column_utils import guess_text_column
+from labeler.column_utils import column_with_fewest_empty, count_empty, guess_text_column
 from labeler.csv_io import read_csv
 from labeler.errors import CsvReadError
 from ui.session import clear_result
@@ -50,3 +50,18 @@ def render(state: AppState) -> None:
     if column != state.text_column:
         state.text_column = column
         clear_result(state)
+    _warn_empty_rows(df, column)
+
+
+def _warn_empty_rows(df: pd.DataFrame, column: str) -> None:
+    """Empty rows are skipped, so say so before anyone pays for a run."""
+    empty = count_empty(df, column)
+    if not empty:
+        return
+    message = f"{empty:,} of {len(df):,} rows are empty in `{column}`; they will not be labelled."
+    if empty / len(df) > config.EMPTY_WARNING_SHARE:
+        best = column_with_fewest_empty(df)
+        hint = f" Column `{best}` has text in the most rows." if best != column else ""
+        st.error(f"{message} Is this the right column?{hint}")
+    else:
+        st.warning(message)
