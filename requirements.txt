@@ -1,0 +1,8 @@
+openai>=1.54
+pandas>=2.1
+streamlit>=1.38
+tiktoken>=0.8
+python-dotenv>=1.0
+
+# development
+pytest>=8.0
