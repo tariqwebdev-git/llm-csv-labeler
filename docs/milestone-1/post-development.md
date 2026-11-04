@@ -34,3 +34,6 @@ The remaining errors are 6 distinct texts, mostly repeats. "Bike hit while parke
 2. **The estimate is low on large runs:** $0.0057 estimated vs $0.0075 actual on 1,000 rows. The likely cause is missing-row retries in 50-row batches. Investigate (log the retry count, or try BATCH_SIZE 25).
 3. Check the `gpt-4o-mini` prices against the OpenAI pricing page (they're in `config.py`).
 4. Day 2: Streamlit UI, macOS README, progress update to Alex.
+
+## Stress test (see `stress-test-results.md`)
+5,000 rows cost about $0.044 per query (about $0.009 per 1,000 rows) and take about 40 s. The cost is the same whether matches are at the end or the query is hard (negation, two conditions). The pending item about the estimate being low is now **explained by retries** (0–4% on these runs). Negation queries retry the most and are the least accurate (94.5%), so they should always be test-run first.
