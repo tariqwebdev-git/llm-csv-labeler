@@ -50,6 +50,8 @@ The app never guesses. A row the model refuses or fails on is left blank and giv
 - **Say how to treat borderline cases**, e.g. "(near misses count)".
 - **"Does not mention…" queries are the hardest.** Always test them on 20 rows first.
 - **Look at the lowest-confidence rows** in the results; that's where the model was unsure.
+- **Use "Explicitly mentions…"** when you mean words actually in the answer. Otherwise the model may also count answers that only imply it (e.g. "Voter ID" counted as "stopping non-citizens").
+- **Avoid subjective words** like "offensive". Say what counts, e.g. "swear words or name-calling".
 
 ### Status of a card
 Not run → Tested → Done (or Done with errors). Editing a finished query marks it **Out of date**: its columns leave the download until you click Run again.
