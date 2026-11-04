@@ -22,6 +22,10 @@ REQUEST_TIMEOUT_SECONDS = 60
 MAX_ROW_CHARS = 2000       # longer text is trimmed and noted "trimmed"
 SOFT_ROW_LIMIT = 10_000    # warn above this many rows
 
+# --- Interface ---------------------------------------------------------------
+PREVIEW_ROWS = 10          # rows shown after upload
+RESULT_PREVIEW_ROWS = 50   # rows shown in the result preview (lowest confidence first)
+
 # --- Test runs ---------------------------------------------------------------
 TEST_SIZE = 20             # rows in a test run
 TEST_SEED = 42             # fixed so a test run always uses the same rows

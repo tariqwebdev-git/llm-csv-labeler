@@ -9,6 +9,7 @@ import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
 
+from labeler import config
 from labeler.models import RowLabel
 
 _SQLITE_MAX_PARAMS = 900   # stay under SQLite's per-query variable limit
@@ -16,8 +17,9 @@ _SEPARATOR = "\x1f"
 
 
 class ResultCache:
-    def __init__(self, path: Path):
-        self._conn = sqlite3.connect(path)
+    def __init__(self, path: Path | None = None):
+        """Open the cache file (config.CACHE_PATH unless another path is given)."""
+        self._conn = sqlite3.connect(path or config.CACHE_PATH)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute(
