@@ -1,14 +1,16 @@
 """Accuracy check: run several queries on a CSV and score them against an answer key.
 
-Default cases are the 5 test queries on sample_data/sample.csv. Each run uses a
+Default cases are the 4 test queries on sample_data/sample.csv. Each run uses a
 fresh temporary cache, so results always come from the model (not the cache).
 
   python scripts/run_eval.py                    # gpt-4o-mini (config default)
   python scripts/run_eval.py --model gpt-4o     # compare another model
+  python scripts/run_eval.py --csv data/x.csv --key data/x_key.csv --cases data/x_cases.json
 
 Blank expected labels in the key mean "ambiguous" and are not scored.
 """
 import argparse
+import json
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -37,6 +39,7 @@ _PREVIEW = 80
 class EvalCase:
     query: str
     key_column: str
+    column: str | None = None      # text column; None = the --column option
 
 
 CASES = [
@@ -55,19 +58,21 @@ def main() -> int:
     parser.add_argument("--key", type=Path, default=PROJECT_ROOT / "sample_data" / "sample_key.csv")
     parser.add_argument("--column", default="transportation_open")
     parser.add_argument("--model", default=config.MODEL)
+    parser.add_argument("--cases", type=Path, help='JSON list of {"query", "key_column", "column"}')
     args = parser.parse_args()
+    cases = [EvalCase(**c) for c in json.loads(args.cases.read_text(encoding="utf-8"))] if args.cases else CASES
 
     if args.model in MODEL_PRICES:
         config.PRICE_INPUT_PER_1M, config.PRICE_CACHED_INPUT_PER_1M, config.PRICE_OUTPUT_PER_1M = \
             MODEL_PRICES[args.model]
     data = pd.read_csv(args.csv, dtype=str, keep_default_na=False)
     key = pd.read_csv(args.key, dtype=str, keep_default_na=False)
-    texts = data[args.column].tolist()
 
-    print(f"Model: {args.model} | {len(texts)} rows | {len(CASES)} queries\n")
+    print(f"Model: {args.model} | {len(data)} rows | {len(cases)} queries\n")
     total_cost = 0.0
     try:
-        for case in CASES:
+        for case in cases:
+            texts = data[case.column or args.column].tolist()
             cache = Path(tempfile.mkdtemp(prefix="eval_")) / "cache.db"
             result = run_query(texts, case.query, api_key=load_api_key(), model=args.model, cache_path=cache)
             total_cost += result.stats.cost_usd
@@ -86,7 +91,8 @@ def _report(case: EvalCase, texts: list[str], expected: list[str], result) -> No
     wrong = {t: (e, r) for t, (e, r) in unique.items() if int(e) != r.label}
     print(f"Query: {case.query}")
     print(f"  rows {row_ok}/{len(scored)} ({row_ok / len(scored):.1%}) | unique texts "
-          f"{len(unique) - len(wrong)}/{len(unique)} | ${result.stats.cost_usd:.4f} | {result.stats.seconds}s")
+          f"{len(unique) - len(wrong)}/{len(unique)} | ${result.stats.cost_usd:.4f} | {result.stats.seconds}s"
+          f" | notes {result.stats.note_counts or 'none'}")
     for text, (exp, r) in wrong.items():
         print(f"    WRONG expected {exp} got {r.label} (conf {r.confidence}): {text[:_PREVIEW]}")
     for text, exp, r in zip(texts, expected, result.labels):

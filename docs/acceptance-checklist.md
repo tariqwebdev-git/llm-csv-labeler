@@ -6,7 +6,7 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 ## Functional
 | Item | Status | Evidence |
 |---|---|---|
-| CSV with 1,000 rows uploads and previews correctly | ✅ | `merged_all.csv` (1,030 rows) and `stress.csv` (5,000) in the app; `test_upload_shows_preview_and_picks_text_column` |
+| CSV with 1,000 rows uploads and previews correctly | ✅ | Alex's real file (1,567 rows, blank header kept on download); `merged_all.csv` (1,030 rows) and `stress.csv` (5,000) in the app; `test_upload_shows_preview_and_picks_text_column` |
 | Excel-exported CSV (Windows-1252, semicolons) uploads correctly | ✅ | `test_excel_export_cp1252_semicolons` |
 | Commas, quotes and line breaks inside cells survive upload and download | ✅ | `test_quotes_commas_and_line_breaks_round_trip` |
 | Text column can be chosen and changed | ✅ | `test_empty_rows_warning_names_better_column` (changes column) |
@@ -24,9 +24,9 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 ## Accuracy
 | Item | Status | Evidence |
 |---|---|---|
-| On 20 hand-labelled rows per query (from Alex), labels agree on at least [X] of 20 | ⏳ | Needs Alex's rows and his choice of X. Synthetic results so far: hit 97.2%, buses 95.5%, no-vehicle 97.0%, insults 100% (`scripts/run_eval.py`); stress test 100% of 5,000 |
+| On 20 hand-labelled rows per query (from Alex), labels agree on at least [X] of 20 | ⏳ | Needs Alex's rows and his choice of X. **His real election file, checked by Tariq (57–66 rows/query): 100% / 100% / 100% / 96.7% / 90.9%** (`docs/milestone-2/real-data-test.md`). Synthetic: hit 97.2%, buses 95.5%, no-vehicle 97.0%, insults 100% (`scripts/run_eval.py`); stress test 100% of 5,000 |
 | Same query run twice gives the same labels | ✅ | A re-run returns the cached labels (identical by design, `test_duplicates_sent_once_and_rerun_uses_cache`). Uncached repeats use temperature 0; the stress test scored 100% on 3 separate fresh runs |
-| Abusive rows are labelled, or flagged as refused, never guessed | ✅ | All 18 abusive rows were labelled (insult query 18/18); refusal path covered by `test_always_refused_row_is_blank_with_note` |
+| Abusive rows are labelled, or flagged as refused, never guessed | ✅ | Alex's real file: 0 refused / blocked / failed across 5 queries × 1,567 rows; synthetic: all 18 abusive rows labelled; refusal path covered by `test_always_refused_row_is_blank_with_note` |
 
 ## Failure handling
 | Item | Status | Evidence |
