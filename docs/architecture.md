@@ -37,6 +37,8 @@ Rules:
 llm-csv-labeler/
 ├── app.py                        # Streamlit entry point (thin: layout only)
 ├── ui/
+│   ├── ui_models.py              # AppState type only
+│   ├── session.py                # get_state() from st.session_state
 │   ├── sidebar.py                # key status, model, session spend, clear cache
 │   ├── upload_section.py         # upload, column picker, preview
 │   ├── query_card.py             # one card: edit, test, run, delete, stats box

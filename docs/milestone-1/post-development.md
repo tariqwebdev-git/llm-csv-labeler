@@ -37,3 +37,14 @@ The remaining errors are 6 distinct texts, mostly repeats. "Bike hit while parke
 
 ## Stress test (see `stress-test-results.md`)
 5,000 rows cost about $0.044 per query (about $0.009 per 1,000 rows) and take about 40 s. The cost is the same whether matches are at the end or the query is hard (negation, two conditions). The pending item about the estimate being low is now **explained by retries** (0–4% on these runs). Negation queries retry the most and are the least accurate (94.5%), so they should always be test-run first.
+
+## Day 2 (UI)
+**Built:**
+- **Injection fix:** items are wrapped in `<items>` tags and the prompt has an explicit rule. Both injection rows are now correct, and sample accuracy went from 94.3% to **96.7%** with the near-miss wording.
+- **Streamlit UI:** `app.py` plus `ui/` (sidebar, upload, query, download). You can upload a CSV, pick a column (auto-guessed), see the estimated cost, and Run a single query with a progress bar. A shaded result box shows the counts, followed by a preview sorted by lowest confidence first, and the download has the 3 new columns.
+- **Guard rails:** Run is disabled without a key or a query, bad CSVs show a plain error, there's a warning above 10,000 rows, and changing the query after a run shows an "out of date" warning.
+- **Cache path:** `ResultCache` now reads `config.CACHE_PATH` when it's called, not when it's imported (which makes it testable).
+- **README:** macOS setup, usage, settings and troubleshooting.
+- **Tests:** 44 pass, including 4 Streamlit AppTest UI tests with the fake model.
+
+**Pending (Day 3):** query cards for several queries (edit/delete/status), the 20-row test run, the cache-clear button, JSON save/load. A manual browser check and screenshots are still needed.
