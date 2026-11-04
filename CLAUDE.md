@@ -51,4 +51,4 @@ python scripts/run_eval.py [--model gpt-4o]                             # accura
 `app.py` (layout only) + `ui/`: `ui_models.py` (AppState, QueryRun types), `session.py` (get_state), `query_actions.py` (state rules: add/edit/delete/record, no drawing), `result_tables.py` (preview order, test split), `sidebar.py` (key status, spend, Clear cache), `upload_section.py`, `query_list_section.py` (add form + cards), `query_card.py` (one card: Edit/Test/Run/Delete), `query_file_section.py` (save/load JSON), `download_section.py`. UI tests: `tests/test_app_ui.py` (AppTest + fake model).
 
 ## Status
-See the latest `docs/milestone-*/post-development.md`.
+See the latest `docs/milestone-*/post-development.md` and `docs/acceptance-checklist.md` (✅ done, ⏳ needs Alex).

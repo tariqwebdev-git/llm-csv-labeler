@@ -17,6 +17,7 @@ def labeled_table(state: AppState) -> pd.DataFrame:
 
 
 def render(state: AppState) -> None:
+    """Draw the download step."""
     st.header("4. Download")
     if state.df is None:
         st.caption("Upload a CSV first.")

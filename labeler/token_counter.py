@@ -9,6 +9,7 @@ _FALLBACK_ENCODING = "o200k_base"   # used by current OpenAI chat models
 
 
 def count_tokens(text: str) -> int:
+    """Number of model tokens in `text`."""
     return len(_encoding().encode(text, disallowed_special=()))
 
 
