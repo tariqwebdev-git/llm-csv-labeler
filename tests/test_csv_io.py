@@ -30,3 +30,12 @@ def test_unusable_files_rejected(data):
 
 def test_labeled_filename():
     assert labeled_filename("answers.csv") == "answers_labeled.csv"
+
+
+def test_blank_header_survives_upload_and_download():
+    from labeler.models import RowLabel
+    from labeler.output_builder import add_result_columns
+    df = read_csv(b'"","answer"\n"1","voter id"\n')
+    out = add_result_columns(df, "q", [RowLabel(1, 0.9)])
+    header = to_csv_bytes(out).decode("utf-8-sig").splitlines()[0]
+    assert header == ',answer,q,q_conf,q_note'

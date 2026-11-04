@@ -11,6 +11,7 @@ from labeler.errors import CsvReadError
 _ENCODINGS = ("utf-8-sig", "cp1252")
 _DELIMITERS = ",;\t"
 _SNIFF_CHARS = 64_000
+_RENAMED_HEADERS = "renamed_headers"   # key in DataFrame.attrs
 
 
 def read_csv(data: bytes) -> pd.DataFrame:
@@ -34,17 +35,29 @@ def read_csv(data: bytes) -> pd.DataFrame:
 
     if df.empty:
         raise CsvReadError("The file has a header but no data rows.")
+    df.attrs[_RENAMED_HEADERS] = _renamed_headers(text, delimiter, list(df.columns))
     return df
 
 
 def to_csv_bytes(df: pd.DataFrame) -> bytes:
-    """UTF-8 with BOM so Excel shows special characters correctly."""
-    return df.to_csv(index=False).encode("utf-8-sig")
+    """UTF-8 with BOM so Excel shows special characters correctly.
+
+    Headers pandas renamed on reading (a blank header becomes 'Unnamed: 0')
+    are written back exactly as they were in the original file.
+    """
+    out = df.rename(columns=df.attrs.get(_RENAMED_HEADERS, {}))
+    return out.to_csv(index=False).encode("utf-8-sig")
 
 
 def labeled_filename(original_name: str) -> str:
     """'answers.csv' -> 'answers_labeled.csv'."""
     return f"{Path(original_name).stem}_labeled.csv"
+
+
+def _renamed_headers(text: str, delimiter: str, columns: list[str]) -> dict[str, str]:
+    """{pandas column name: original header} for headers pandas changed (e.g. blank ones)."""
+    raw = next(csv.reader(io.StringIO(text), delimiter=delimiter))
+    return {col: orig for col, orig in zip(columns, raw) if col != orig}
 
 
 def _decode(data: bytes) -> str:

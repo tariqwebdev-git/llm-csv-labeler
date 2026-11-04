@@ -19,3 +19,6 @@ __pycache__/
 # generated stress-test data
 sample_data/stress.csv
 sample_data/stress_key.csv
+
+# client data: never commit
+data/
