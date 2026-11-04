@@ -91,7 +91,7 @@ def _print_stats(stats, labels: list[RowLabel]) -> None:
     print(f"From cache: {stats.rows_from_cache} rows | texts sent: {stats.texts_sent} | "
           f"time: {stats.seconds}s | actual cost: ${stats.cost_usd:.5f}")
     print(f"Tokens: {stats.usage.input_tokens} in ({stats.usage.cached_input_tokens} cached) / "
-          f"{stats.usage.output_tokens} out | labels without confidence: {no_conf}")
+          f"{stats.usage.output_tokens} out | requests: {stats.requests_sent} | labels without confidence: {no_conf}")
 
 
 def _check_accuracy(texts: pd.Series, labels: list[RowLabel], key_path: Path, key_column: str, n_rows: int) -> None:

@@ -43,6 +43,7 @@ class BatchRunner:
         self._batch_size = batch_size
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._usage = TokenUsage()
+        self._requests_sent = 0
 
     async def run(
         self,
@@ -77,7 +78,7 @@ class BatchRunner:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             raise
-        return BatchRunOutput(labels=labels, usage=self._usage)
+        return BatchRunOutput(labels=labels, usage=self._usage, requests_sent=self._requests_sent)
 
     async def _label_group(self, texts: list[str], indices: list[int], allow_halving: bool) -> dict[int, RowLabel]:
         reply = await self._send([texts[i] for i in indices])
@@ -114,6 +115,7 @@ class BatchRunner:
         """One API call under the concurrency limit. None means it failed after retries."""
         max_tokens = len(items) * config.OUTPUT_TOKENS_PER_ROW_LIMIT + _REPLY_OVERHEAD_TOKENS
         async with self._semaphore:
+            self._requests_sent += 1
             try:
                 reply = await self._classifier.classify(
                     SYSTEM_PROMPT, build_batch_prompt(self._criterion, items), max_tokens
