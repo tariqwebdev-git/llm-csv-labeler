@@ -15,14 +15,14 @@ python scripts/run_labeling_cli.py --help                             # headless
 pytest
 python sample_data/make_sample.py                                      # regenerate synthetic data
 python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   # 5k-row stress test (~$0.19, capped by --max-spend)
-python scripts/run_eval.py [--model gpt-4o]                             # accuracy of 4 queries vs hand keys (~$0.005)
+python scripts/run_eval.py [--model gpt-4o-mini]                             # accuracy of 4 queries vs hand keys (~$0.005)
 ```
 
 ## Architecture (full detail: docs/architecture.md)
 - `app.py` + `ui/`: Streamlit only. They never call OpenAI, SQLite or the file system directly. They call `labeler.labeling_engine`.
 - `labeler/`: core logic, with no Streamlit imports (so it can be reused by a future hosted version).
 - `openai_client.py` is the only file that talks to OpenAI.
-- Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: `gpt-4o-mini` (gpt-4.1-nano is deprecated).
+- Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: **`gpt-6-luna` with `REASONING_EFFORT="none"`** (needed for logprobs). gpt-4o-mini/gpt-4o shut down 2027-01-14; gpt-4.1-nano already retired. Python **3.12+** (numpy pin); `requirements.txt` is pinned exactly.
 - **Batches stay small (10 rows / 1,000 tokens)**: bigger batches make answers drift between items (see docs/milestone-2/post-development.md). Batching is planned in `batch_planner.py`.
 - Tests use `tests/fake_classifier.py` (no API cost). Live checks use the CLI with `--limit`.
 

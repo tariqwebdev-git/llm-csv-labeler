@@ -2,14 +2,18 @@
 from pathlib import Path
 
 # --- Model -------------------------------------------------------------------
-# Must be a standard chat model (NOT a reasoning model): confidence scores
-# depend on token log probabilities, which reasoning models do not return.
-MODEL = "gpt-4o-mini"
+# Confidence scores need token log probabilities. Older chat models return them
+# directly (REASONING_EFFORT = None). Newer reasoning models only return them with
+# reasoning switched off (REASONING_EFFORT = "none"); otherwise OpenAI rejects
+# the request. Check https://developers.openai.com/api/docs/deprecations before
+# changing, and update the 3 prices below to match the model.
+MODEL = "gpt-6-luna"           # replaced gpt-4o-mini (shuts down 2027-01-14)
+REASONING_EFFORT = "none"       # gpt-6-luna is a reasoning model: "none" is required for logprobs
 
-# USD per 1 million tokens, from https://openai.com/api/pricing (estimates only).
-PRICE_INPUT_PER_1M = 0.15
-PRICE_CACHED_INPUT_PER_1M = 0.075
-PRICE_OUTPUT_PER_1M = 0.60
+# USD per 1 million tokens (estimates only). Source: OpenAI model page, checked 2026-11-05.
+PRICE_INPUT_PER_1M = 0.10
+PRICE_CACHED_INPUT_PER_1M = 0.01
+PRICE_OUTPUT_PER_1M = 0.50
 
 # --- Batching and speed ------------------------------------------------------
 BATCH_SIZE = 10            # max rows per request; >20 lets answers drift between items (tested)
