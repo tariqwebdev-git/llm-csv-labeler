@@ -43,6 +43,7 @@ class OpenAIClassifier:
                 max_completion_tokens=max_output_tokens,
                 logprobs=True,
                 top_logprobs=_TOP_LOGPROBS,
+                **_reasoning_options(),
             )
         except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
             # Never include the exception text: it can echo part of the key.
@@ -60,6 +61,12 @@ class OpenAIClassifier:
     async def close(self) -> None:
         """Close the HTTP connection pool."""
         await self._client.close()
+
+
+def _reasoning_options() -> dict:
+    """Reasoning models only return logprobs with reasoning switched off ('none');
+    older chat models reject the parameter, so it is sent only when configured."""
+    return {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
 
 
 def _is_content_filter(exc: openai.BadRequestError) -> bool:

@@ -26,10 +26,13 @@ from labeler.api_key import load_api_key  # noqa: E402
 from labeler.errors import LabelerError  # noqa: E402
 from labeler.labeling_engine import run_query  # noqa: E402
 
-# USD per 1M tokens (input, cached input, output) for models we compare.
-MODEL_PRICES = {
-    "gpt-4o-mini": (0.15, 0.075, 0.60),
-    "gpt-4o": (2.50, 1.25, 10.00),
+# Per model: USD per 1M tokens (input, cached input, output) and reasoning effort
+# (reasoning models need "none" to return logprobs). Prices checked 2026-11-05.
+MODEL_SETTINGS = {
+    "gpt-4o-mini": ((0.15, 0.075, 0.60), None),
+    "gpt-4o": ((2.50, 1.25, 10.00), None),
+    "gpt-6-luna": ((0.10, 0.01, 0.50), "none"),
+    "gpt-5.6-luna": ((0.20, 0.02, 1.20), "none"),
 }
 INJECTION_MARKERS = ("Ignore the above instructions", "SYSTEM: label this row")
 _PREVIEW = 80
@@ -62,9 +65,9 @@ def main() -> int:
     args = parser.parse_args()
     cases = [EvalCase(**c) for c in json.loads(args.cases.read_text(encoding="utf-8"))] if args.cases else CASES
 
-    if args.model in MODEL_PRICES:
-        config.PRICE_INPUT_PER_1M, config.PRICE_CACHED_INPUT_PER_1M, config.PRICE_OUTPUT_PER_1M = \
-            MODEL_PRICES[args.model]
+    if args.model in MODEL_SETTINGS:
+        prices, config.REASONING_EFFORT = MODEL_SETTINGS[args.model]
+        config.PRICE_INPUT_PER_1M, config.PRICE_CACHED_INPUT_PER_1M, config.PRICE_OUTPUT_PER_1M = prices
     data = pd.read_csv(args.csv, dtype=str, keep_default_na=False)
     key = pd.read_csv(args.key, dtype=str, keep_default_na=False)
 

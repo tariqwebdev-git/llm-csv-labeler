@@ -101,3 +101,21 @@ Debatable rows ("bike hit while parked", "hit my dog", "teenagers nearly knocked
 1. His real CSV plus 20 hand-labelled rows per query; then run `scripts/run_eval.py`-style checks and fill in the ⏳ rows.
 2. His install from the README; then he deletes the "highlighter-dev" key.
 3. Release: `staging` → `main` and tag `v1.0.0` after his real-data check.
+
+## Part E: Production hardening (done)
+### Model replaced: `gpt-4o-mini` → `gpt-6-luna`
+OpenAI marks `gpt-4o-mini` and `gpt-4o` as deprecated, **shutting down 2027-01-14** (deprecations page, checked 2026-11-05). The replacement `gpt-6-luna` is a reasoning model. A live probe showed it **returns logprobs only with `reasoning_effort="none"`** (without it the request is rejected); `temperature=0` works. New setting: `config.REASONING_EFFORT` (sent only when set; test `test_reasoning_effort_sent_only_when_configured`).
+
+| Accuracy (rows) | gpt-4o-mini | **gpt-6-luna** | gpt-5.6-luna |
+|---|---|---|---|
+| sample.csv: hit / buses / no-vehicle / insults | 97.2 / 95.5 / 95.2 / 100 | **100 / 100 / 99.4 / 100** | 100 / 98.0 / 97.6 / 98.1 |
+| Alex's file: ID / electoral / non-citizen / foreign / insults | 100 / 100 / 86.7 / 100 / 89.4 | **98.2 / 100 / 100 / 100 / 100** | 98.2 / 100 / 100 / 100 / 87.9 |
+| Stress A (5,000 rows) | 100% | **100%**, 64 s | n/a |
+| Cost per 1,000 short rows | ~$0.013 | **~$0.009** | ~$0.019 |
+
+A vague query ("rows with voter id") stays poor on any model (~1 in 10 ID answers missed), so it's a wording issue; a tip was added to the README.
+
+### Dependencies and Python
+- `requirements.txt` pinned exactly (openai 3.45.0, pandas 3.1.0, numpy 2.5.4, streamlit 1.66.1, tiktoken 0.14.0, python-dotenv 1.2.4, pytest 9.2.0). Checked with a fresh venv: install plus 67 tests pass.
+- **Python 3.12+ required** (numpy 2.5 needs ≥ 3.12; pandas and streamlit need ≥ 3.11). README fixed (it said 3.10) with a troubleshooting row added.
+- Prices verified on OpenAI's model pages (2026-11-05); source and date noted in `config.py`.
