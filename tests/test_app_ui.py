@@ -136,3 +136,8 @@ def test_short_query_warning(make_app):
     at = _upload(make_app())
     at.text_area(key="new_query_text").input("accident").run()
     assert any("Short queries" in w.value for w in at.warning)
+
+
+def test_card_shows_test_and_full_estimates(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    assert any("test $" in c.value and "for 20 rows" in c.value and "full run $" in c.value for c in at.caption)

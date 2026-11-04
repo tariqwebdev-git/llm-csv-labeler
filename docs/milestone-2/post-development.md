@@ -52,3 +52,35 @@ Both are still well inside the plan's targets (under 2 minutes, a few cents).
 ## Pending (Day 4)
 - A manual browser check plus screenshots for Alex.
 - Day 4 hardening: README final, code-comment pass, screen recording, Alex's real data, the accuracy target from Alex's 20 hand-labelled rows.
+
+## Part C: Prompt hardening and evaluation (done)
+`scripts/run_eval.py` scores 4 queries on `sample.csv` against hand-made keys (`sample_data/sample_extra_keys.py`; a blank key means ambiguous, not scored). Each run uses a fresh cache.
+
+### Prompt variants tested (wrong unique texts per query: hit / buses / no-vehicle / insult)
+| Variant | Wrong | Notes |
+|---|---|---|
+| Baseline (Day 3 prompt) | 4 / 4 / 3 / 0 = **11** | injection wrong on the negation query |
+| + reminder after items + negation rule + "apply exactly" rule | 7 / 2 / 1 / 0 = 10 | **the hit query got worse** (missed golf cart, cyclist, hit-and-run) |
+| **+ reminder + negation rule (chosen)** | 3 / 3 / 2 / 0 = **8** | best balance; the injection on the negation query is still wrong but flagged (confidence 0.56) |
+| + balanced "meaning" rule | 6 / 1 / 1 / 0 = 8 | the hit query got worse again |
+
+**Finding:** with `gpt-4o-mini`, any rule that tightens one query loosens another. The model is at its limit, and further prompt tweaks only move errors around.
+
+### Model comparison (chosen prompt)
+| Model | Wrong | Cost per 1,000 rows | Notes |
+|---|---|---|---|
+| **gpt-4o-mini (kept)** | 8 | ~$0.005 | |
+| gpt-4o | 7 | ~$0.08 (16×) | buses query 100%, all injections resisted; but says scooters/cyclists aren't vehicles (debatable) |
+
+Decision: keep `gpt-4o-mini`. `gpt-4o` is a one-line switch in `config.py` for hard queries.
+
+### Regression checks
+- Stress A: **100%** (5,000 of 5,000). Cost +11% (reminder text): $0.065 per 5,000 rows.
+- Insult query: 100%.
+
+### Also
+- Cards now show **"Estimate: test $x for 20 rows · full run $y"** before running.
+- 61 tests pass.
+
+### Remaining errors (honest)
+Debatable rows ("bike hit while parked", "hit my dog", "teenagers nearly knocked me over", the ferry), plus the injection row on the negation query, which is flagged as unsure. These need Alex's query wording or a v2 "invert" option for negation queries.

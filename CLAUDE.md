@@ -15,6 +15,7 @@ python scripts/run_labeling_cli.py --help                             # headless
 pytest
 python sample_data/make_sample.py                                      # regenerate synthetic data
 python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   # 5k-row stress test (~$0.19, capped by --max-spend)
+python scripts/run_eval.py [--model gpt-4o]                             # accuracy of 4 queries vs hand keys (~$0.005)
 ```
 
 ## Architecture (full detail: docs/architecture.md)
