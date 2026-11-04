@@ -18,6 +18,7 @@ def _estimate(file_id: str, column: str, query_text: str, cache_version: int, _t
 
 
 def render(state: AppState, query: Query, api_key: str | None) -> None:
+    """Draw one query card."""
     ready = state.df is not None and state.text_column is not None
     editing = st.session_state.get(_key("editing", query), False)
 

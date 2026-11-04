@@ -10,6 +10,7 @@ FORMAT_VERSION = 1
 
 
 def queries_to_json(queries: Iterable[Query]) -> str:
+    """Queries as a version-1 JSON document (name and text only)."""
     data = {
         "version": FORMAT_VERSION,
         "queries": [{"name": q.name, "text": q.text} for q in queries],

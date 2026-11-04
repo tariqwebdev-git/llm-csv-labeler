@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "queries": [
+    {
+      "name": "hit_or_near_miss",
+      "text": "Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"
+    },
+    {
+      "name": "bus_train_complaint",
+      "text": "Complains that buses or trains are late, unreliable or do not go where needed"
+    },
+    {
+      "name": "insults",
+      "text": "Contains insults, swearing or offensive language"
+    },
+    {
+      "name": "person_hurt",
+      "text": "Describes a person getting hurt in an accident, such as being hit by a vehicle"
+    }
+  ]
+}

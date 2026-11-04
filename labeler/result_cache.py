@@ -35,6 +35,7 @@ class ResultCache:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def get_many(self, keys: Iterable[str]) -> dict[str, RowLabel]:
+        """Cached labels for the given keys; missing keys are simply absent."""
         keys = list(keys)
         found: dict[str, RowLabel] = {}
         for start in range(0, len(keys), _SQLITE_MAX_PARAMS):
@@ -58,10 +59,12 @@ class ResultCache:
         self._conn.commit()
 
     def clear(self) -> None:
+        """Delete every cached result."""
         self._conn.execute("DELETE FROM results")
         self._conn.commit()
 
     def close(self) -> None:
+        """Close the database connection."""
         self._conn.close()
 
     def __enter__(self) -> "ResultCache":

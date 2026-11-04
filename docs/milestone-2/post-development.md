@@ -84,3 +84,20 @@ Decision: keep `gpt-4o-mini`. `gpt-4o` is a one-line switch in `config.py` for h
 
 ### Remaining errors (honest)
 Debatable rows ("bike hit while parked", "hit my dog", "teenagers nearly knocked me over", the ferry), plus the injection row on the negation query, which is flagged as unsure. These need Alex's query wording or a v2 "invert" option for negation queries.
+
+## Part D: Day 4 hardening and handover (done)
+| Item | Result |
+|---|---|
+| Rate-limit test | `tests/test_openai_client.py`: the real client against a fake HTTP server (429 → retry → labelled; 429 forever → `failed`; 401 → clear error, key not echoed). `OpenAIClassifier` takes an optional `http_client` (tests only) |
+| Mid-run kill test | `tests/test_cache_crash_safety.py`: hard-kills a run, then `PRAGMA integrity_check = ok` and the saved batches are kept |
+| Acceptance checklist | `docs/acceptance-checklist.md`: every section 8 item ✅ with evidence, or ⏳ where it needs Alex (his data, the [X]-of-20 target, his install, Excel on his Mac) |
+| README | Rewritten for cards: usage, query-writing tips, statuses, settings table (incl. `gpt-4o` switch), troubleshooting |
+| Docstrings | Every public function in `labeler/` and `ui/` |
+| Sample queries | `sample_data/sample_queries.json` |
+| Walkthrough script | `docs/walkthrough-script.md` (≤ 5 min; recorded by Tariq) |
+| Tests | 65 pass |
+
+## Pending (needs Alex)
+1. His real CSV plus 20 hand-labelled rows per query; then run `scripts/run_eval.py`-style checks and fill in the ⏳ rows.
+2. His install from the README; then he deletes the "highlighter-dev" key.
+3. Release: `staging` → `main` and tag `v1.0.0` after his real-data check.

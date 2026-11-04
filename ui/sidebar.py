@@ -7,6 +7,7 @@ from ui.ui_models import AppState
 
 
 def render(state: AppState, api_key_found: bool) -> None:
+    """Draw the sidebar."""
     with st.sidebar:
         st.title("LLM CSV Labeler")
         if api_key_found:
