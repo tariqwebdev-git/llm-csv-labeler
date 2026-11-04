@@ -33,10 +33,15 @@ def render(state: AppState, query: Query, api_key: str | None) -> None:
         if full:
             _stats_box(full)
         if ready and not editing:
-            texts = state.df[state.text_column].tolist()
-            est = _estimate(state.file_id, state.text_column, query.text, state.cache_version, texts)
-            st.caption(f"Full run estimate: ${est.cost_usd:.4f} for {est.rows_total:,} rows "
-                       f"({est.rows_cached:,} already cached)")
+            column = state.df[state.text_column]
+            test_texts = column.iloc[pick_test_rows(len(column))].tolist()
+            test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
+                                 state.cache_version, test_texts)
+            full_est = _estimate(state.file_id, state.text_column, query.text,
+                                 state.cache_version, column.tolist())
+            st.caption(f"Estimate: test ${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
+                       f"full run ${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
+                       f"({full_est.rows_cached:,} already cached)")
 
         _buttons(state, query, api_key, can_run=ready and bool(api_key) and not editing)
         _delete_confirmation(state, query)

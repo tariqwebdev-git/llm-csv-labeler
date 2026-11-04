@@ -12,6 +12,8 @@ import csv
 import random
 from pathlib import Path
 
+from sample_extra_keys import BUS_COMPLAINT, INSULT, NO_VEHICLE, expected
+
 random.seed(42)
 OUT = Path(__file__).parent
 
@@ -181,7 +183,8 @@ def main():
         kw = csv.writer(k)
         w.writerow(["respondent_id", "neighborhood", "transportation_open",
                     "housing_open", "safety_open"])
-        kw.writerow(["respondent_id", "expected_hit_by_vehicle", "category"])
+        kw.writerow(["respondent_id", "expected_hit_by_vehicle", "category",
+                     "expect_bus_complaint", "expect_no_vehicle", "expect_insult"])
         for i, (text, label, cat) in enumerate(rows, start=1001):
             w.writerow([
                 i,
@@ -190,7 +193,9 @@ def main():
                 random.choice(OTHER_COLS["housing_open"]),
                 random.choice(OTHER_COLS["safety_open"]),
             ])
-            kw.writerow([i, "" if label is None else label, cat])
+            kw.writerow([i, "" if label is None else label, cat,
+                         expected(BUS_COMPLAINT, text), expected(NO_VEHICLE, text),
+                         expected(INSULT, text)])
 
     print(f"Wrote {len(rows)} rows to {OUT / 'sample.csv'}")
 
