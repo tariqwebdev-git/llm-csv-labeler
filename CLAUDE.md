@@ -22,6 +22,7 @@ python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   
 - `labeler/`: core logic, with no Streamlit imports (so it can be reused by a future hosted version).
 - `openai_client.py` is the only file that talks to OpenAI.
 - Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: `gpt-4o-mini` (gpt-4.1-nano is deprecated).
+- **Batches stay small (10 rows / 1,000 tokens)**: bigger batches make answers drift between items (see docs/milestone-2/post-development.md). Batching is planned in `batch_planner.py`.
 - Tests use `tests/fake_classifier.py` (no API cost). Live checks use the CLI with `--limit`.
 
 ## Code rules
