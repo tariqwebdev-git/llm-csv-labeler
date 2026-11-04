@@ -7,6 +7,7 @@ _STATE_KEY = "app_state"
 
 
 def get_state() -> AppState:
+    """The app state for this browser session (created on first use)."""
     if _STATE_KEY not in st.session_state:
         st.session_state[_STATE_KEY] = AppState()
     return st.session_state[_STATE_KEY]

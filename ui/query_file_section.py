@@ -10,6 +10,7 @@ _LOADED_KEY = "loaded_query_file_id"
 
 
 def render(state: AppState) -> None:
+    """Draw the save/load queries step."""
     st.header("3. Save or load queries")
     if state.queries:
         st.download_button("Download queries (.json)", data=queries_to_json(state.queries),

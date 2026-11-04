@@ -8,6 +8,7 @@ NOTE_SUFFIX = "_note"
 
 
 def result_column_names(name: str) -> tuple[str, str, str]:
+    """The 3 output column names for a query: name, name_conf, name_note."""
     return name, f"{name}{CONFIDENCE_SUFFIX}", f"{name}{NOTE_SUFFIX}"
 
 

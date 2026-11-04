@@ -18,7 +18,8 @@ class OpenAIClassifier:
     exponential backoff (config.MAX_RETRIES), honouring Retry-After.
     """
 
-    def __init__(self, api_key: str | None, model: str = config.MODEL):
+    def __init__(self, api_key: str | None, model: str = config.MODEL, http_client=None):
+        """`http_client` is only for tests (a fake HTTP transport); leave it None."""
         if not api_key:
             raise ApiKeyError(f"No OpenAI API key found. Add {config.API_KEY_ENV_VAR}=... to the .env file.")
         self._model = model
@@ -26,9 +27,11 @@ class OpenAIClassifier:
             api_key=api_key,
             timeout=config.REQUEST_TIMEOUT_SECONDS,
             max_retries=config.MAX_RETRIES,
+            http_client=http_client,
         )
 
     async def classify(self, system_prompt: str, user_prompt: str, max_output_tokens: int) -> LLMReply:
+        """Send one batch to OpenAI; map SDK errors to our errors (key, config, failed, blocked)."""
         try:
             response = await self._client.chat.completions.create(
                 model=self._model,
@@ -55,6 +58,7 @@ class OpenAIClassifier:
         return _to_reply(response)
 
     async def close(self) -> None:
+        """Close the HTTP connection pool."""
         await self._client.close()
 
 

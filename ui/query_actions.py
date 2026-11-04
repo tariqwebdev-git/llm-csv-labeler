@@ -12,6 +12,7 @@ _COMPLETED = (QueryStatus.DONE, QueryStatus.DONE_WITH_ERRORS)
 
 
 def find_query(state: AppState, query_id: str) -> Query | None:
+    """The query with this id, or None."""
     return next((q for q in state.queries if q.id == query_id), None)
 
 
@@ -30,12 +31,14 @@ def free_column_name(state: AppState, wanted: str, exclude_id: str | None = None
 
 
 def add_query(state: AppState, text: str, name: str) -> Query:
+    """Add a 'Not run' query with a clash-free column name."""
     query = Query(name=free_column_name(state, name or text), text=text.strip())
     state.queries.append(query)
     return query
 
 
 def delete_query(state: AppState, query_id: str) -> None:
+    """Remove a query and its results."""
     state.queries = [q for q in state.queries if q.id != query_id]
     state.full_runs.pop(query_id, None)
     state.test_runs.pop(query_id, None)
@@ -53,6 +56,7 @@ def update_query_text(state: AppState, query_id: str, text: str) -> None:
 
 
 def record_test(state: AppState, query: Query, run: QueryRun) -> None:
+    """Store a 20-row test result; status becomes Tested unless already Done."""
     state.test_runs[query.id] = run
     state.session_spend_usd += run.result.stats.cost_usd
     if query.status not in _COMPLETED:
@@ -60,6 +64,7 @@ def record_test(state: AppState, query: Query, run: QueryRun) -> None:
 
 
 def record_run(state: AppState, query: Query, run: QueryRun) -> None:
+    """Store a full-run result and set Done / Done with errors."""
     state.full_runs[query.id] = run
     state.session_spend_usd += run.result.stats.cost_usd
     query.status = status_after_run(run.result)
