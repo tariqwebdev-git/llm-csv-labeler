@@ -14,6 +14,7 @@ _NAME_KEY = "new_query_name"
 
 
 def render(state: AppState, api_key: str | None) -> None:
+    """Draw the add-query form and all query cards."""
     st.header("2. Queries")
     _add_form(state)
 

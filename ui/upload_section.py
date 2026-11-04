@@ -19,6 +19,7 @@ def _parse_csv(data: bytes) -> pd.DataFrame:
 
 
 def render(state: AppState) -> None:
+    """Draw the upload step: file, preview, text column and empty-row warning."""
     st.header("1. Upload CSV")
     uploaded = st.file_uploader("CSV file", type=["csv"])
     if uploaded is None:
