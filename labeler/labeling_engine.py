@@ -44,7 +44,7 @@ def estimate_cost(
     query_text: str,
     *,
     model: str = config.MODEL,
-    cache_path: Path = config.CACHE_PATH,
+    cache_path: Path | None = None,
 ) -> CostEstimate:
     """Estimated cost of labelling `texts`. Cached and duplicate texts cost nothing."""
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
@@ -71,7 +71,7 @@ def run_query(
     api_key: str | None = None,
     on_progress: ProgressCallback | None = None,
     model: str = config.MODEL,
-    cache_path: Path = config.CACHE_PATH,
+    cache_path: Path | None = None,
     classifier: Classifier | None = None,
 ) -> RunResult:
     """Label each text against `query_text`. Returns one RowLabel per text, same order.
@@ -84,7 +84,7 @@ def run_query(
     ))
 
 
-def clear_cache(cache_path: Path = config.CACHE_PATH) -> None:
+def clear_cache(cache_path: Path | None = None) -> None:
     """Delete all cached results."""
     with ResultCache(cache_path) as cache:
         cache.clear()
