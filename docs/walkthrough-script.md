@@ -6,7 +6,7 @@ Record on Alex's election CSV (`data/elections_sample.csv`: local only, git-igno
 
 | Time | Show | Say |
 |---|---|---|
-| 0:00 | Terminal: `cd ~/Documents/llm-csv-labeler`, `uv run streamlit run app.py` | "Start the app; it opens in the browser. The sidebar shows the key status, the model and the spend." |
+| 0:00 | Terminal: `cd ~/Documents/llm-csv-labeler`, `.venv/bin/python -m streamlit run app.py` | "Start the app; it opens in the browser. The sidebar shows the key status, the model and the spend." |
 | 0:30 | Upload the election CSV | "Upload any CSV. You see the rows and columns, and the first rows of the file." |
 | 0:50 | The app picks "Why do you think that?". Switch to **"How should we improve elections?"** | "The column with the longest text is picked automatically; change it here. If a column has many empty rows, a warning tells you." |
 | 1:10 | Type `voter id` in New query | "Short queries are often misread, so the app warns you. Describe the opinion in a full sentence instead." |

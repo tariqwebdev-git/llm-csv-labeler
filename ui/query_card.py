@@ -40,8 +40,9 @@ def render(state: AppState, query: Query, api_key: str | None) -> None:
                                  state.cache_version, test_texts)
             full_est = _estimate(state.file_id, state.text_column, query.text,
                                  state.cache_version, column.tolist())
-            st.caption(f"Estimate: test ${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
-                       f"full run ${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
+            # "\$" stops Streamlit reading the text between two $ signs as a maths formula.
+            st.caption(f"Estimate: test \\${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
+                       f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
                        f"({full_est.rows_cached:,} already cached)")
 
         _buttons(state, query, api_key, can_run=ready and bool(api_key) and not editing)
@@ -78,7 +79,7 @@ def _stats_box(run: QueryRun) -> None:
     notes = ", ".join(f"{count} {note}" for note, count in stats.note_counts.items()) or "none"
     st.info(f"**{stats.matched:,} of {stats.rows_total:,} matched, {stats.not_labelled:,} not labelled**  \n"
             f"Notes: {notes}  \n"
-            f"Cost ${stats.cost_usd:.4f} · {stats.seconds}s · {stats.rows_from_cache:,} rows from cache")
+            f"Cost \\${stats.cost_usd:.4f} · {stats.seconds}s · {stats.rows_from_cache:,} rows from cache")
 
 
 def _buttons(state: AppState, query: Query, api_key: str | None, can_run: bool) -> None:
@@ -133,7 +134,7 @@ def _test_preview(state: AppState, query: Query, test: QueryRun) -> None:
     matched, unmatched, not_labelled = split_test_rows(
         state.df, state.text_column, query.name, test.row_indices, test.result.labels)
     with st.expander(f"Test on {len(test.row_indices)} rows: {len(matched)} matched, "
-                     f"{len(unmatched)} not matched · cost ${test.result.stats.cost_usd:.4f}", expanded=True):
+                     f"{len(unmatched)} not matched · cost \\${test.result.stats.cost_usd:.4f}", expanded=True):
         st.markdown("**Matched**")
         st.dataframe(_by_confidence(matched, query.name))
         st.markdown("**Not matched**")

@@ -140,4 +140,13 @@ def test_short_query_warning(make_app):
 
 def test_card_shows_test_and_full_estimates(make_app):
     at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
-    assert any("test $" in c.value and "for 20 rows" in c.value and "full run $" in c.value for c in at.caption)
+    # "$" is escaped, otherwise Streamlit shows the text between two "$" as a maths formula
+    assert any("test \\$" in c.value and "for 20 rows" in c.value and "full run \\$" in c.value
+               for c in at.caption)
+
+
+def test_wrong_environment_warning(make_app, monkeypatch):
+    import ui.sidebar as sidebar
+    assert not any("own environment" in w.value for w in make_app().warning)
+    monkeypatch.setattr(sidebar, "running_in_project_env", lambda: False)
+    assert any("own environment" in w.value for w in make_app().warning)

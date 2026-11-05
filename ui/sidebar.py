@@ -2,8 +2,13 @@
 import streamlit as st
 
 from labeler import config
+from labeler.environment_check import running_in_project_env
 from labeler.labeling_engine import clear_cache
 from ui.ui_models import AppState
+
+WRONG_ENV_WARNING = ("The app is not running from its own environment (.venv), so errors may occur. "
+                     "Stop it (Ctrl+C) and start it with: `.venv/bin/python -m streamlit run app.py` "
+                     "(see INSTALL-MAC.md).")
 
 
 def render(state: AppState, api_key_found: bool) -> None:
@@ -14,6 +19,8 @@ def render(state: AppState, api_key_found: bool) -> None:
             st.success("API key found")
         else:
             st.error(f"API key missing. Add {config.API_KEY_ENV_VAR}=... to the .env file, then restart.")
+        if not running_in_project_env():
+            st.warning(WRONG_ENV_WARNING)
         st.caption(f"Model: `{config.MODEL}`")
         st.metric("Spend this session", f"${state.session_spend_usd:.4f}")
         if st.button("Clear cache", key="clear_cache",
