@@ -135,3 +135,14 @@ Alex installs alone, with no screen share and no Mac on our side, and may have a
 - `INSTALL-MAC.md` step 1 was changed for the zip. The README's developer note points to `docs/architecture.md`.
 - The walkthrough script was rewritten for Alex's election CSV.
 - Released `dev` → `staging` → `main`, tagged `v1.0.0`.
+
+## Part H: v1.0.1 zip cleanup (done)
+- **`docs/acceptance-checklist.md` left out of the zip** (`export-ignore`). It shows accuracy figures, asks Alex for hand-labelled rows and an accuracy target, and links to an internal doc. It stays in the repo.
+- **`docs/architecture.md` brought in line with the code** (it's the maintenance doc in Alex's zip):
+  - the folder tree now matches the zip, adding `batch_planner`, `token_counter`, all scripts and `INSTALL-MAC.md`, and dropping `CLAUDE.md` and the milestone folders
+  - batches are ≤ 10 rows / 1,000 tokens with ids 1–10
+  - the reply cap is rows × 8
+  - the Model section covers `gpt-6-luna` + `REASONING_EFFORT` and how to change the model
+  - the internal "Changes from the plan" and Git sections are removed
+- `INSTALL-MAC.md` step 1 names the zip version-free ("e.g. …v1.0.1.zip").
+- No app code changed; the walkthrough video recorded on v1.0.0 is still valid.
