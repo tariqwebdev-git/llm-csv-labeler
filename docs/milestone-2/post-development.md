@@ -119,3 +119,11 @@ A vague query ("rows with voter id") stays poor on any model (~1 in 10 ID answer
 - `requirements.txt` pinned exactly (openai 3.45.0, pandas 3.1.0, numpy 2.5.4, streamlit 1.66.1, tiktoken 0.14.0, python-dotenv 1.2.4, pytest 9.2.0). Checked with a fresh venv: install plus 67 tests pass.
 - **Python 3.12+ required** (numpy 2.5 needs ≥ 3.12; pandas and streamlit need ≥ 3.11). README fixed (it said 3.10) with a troubleshooting row added.
 - Prices verified on OpenAI's model pages (2026-11-05); source and date noted in `config.py`.
+
+## Part F: Mac install guide (done)
+Alex installs alone, with no screen share and no Mac on our side, and may have an old Python or none.
+- **`INSTALL-MAC.md`** (repo root): a step-by-step guide for a non-technical user. Each step says what to do, gives one command to paste, and shows "✅ You should see" with the real output. It covers getting the zip, opening Terminal, installing [uv](https://docs.astral.sh/uv/) (no admin password; it installs Python 3.12 into the project), installing the pinned packages, adding the key with TextEdit, starting the app and a quick check on the sample, followed by daily use and updating to a new version.
+- **"If something goes wrong" table:** blank page / the app won't load (refresh, direct URL, private window to detect a blocking extension, another browser, Terminal still open), browser didn't open, port 8502, `uv` not found, wrong folder, install error, email prompt, key missing or rejected, all rows failed (billing / spend limit), app stopped, Excel characters.
+- **README Setup** now points to the guide, and its short version uses the same uv commands (one way to install). The troubleshooting table has a blank-page row.
+- The walkthrough script and acceptance checklist were updated.
+- **Verified on a clean copy** (`git archive`, Windows): `uv venv --python 3.12` + `uv pip install -r requirements.txt` → 52 packages, `uv run pytest` → 67 pass, and `uv run streamlit run app.py` → health check 200. Not tested on a real Mac (none available); the commands are uv's standard cross-platform ones.

@@ -4,24 +4,18 @@ Upload a CSV, write plain-English yes/no queries, and download your file with th
 
 ## Setup (macOS)
 
-1. **Python 3.12 or newer** (tested on 3.12). In Terminal, run `python3 --version`. The Python built into macOS is too old, so if it shows anything below 3.12, install 3.12 from [python.org](https://www.python.org/downloads/) and open a new Terminal window.
-2. **Get the project folder** (GitHub or zip) and open Terminal inside it.
-3. **Create a virtual environment and install:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-4. **Add your OpenAI API key:** copy `.env.example` to `.env`, then paste your key after `OPENAI_API_KEY=`.
-   ```bash
-   cp .env.example .env
-   open -e .env
-   ```
-5. **Start the app:**
-   ```bash
-   streamlit run app.py
-   ```
-   It opens in your browser. Next time, you only need `source venv/bin/activate` and `streamlit run app.py`.
+**New to Terminal? Follow [INSTALL-MAC.md](INSTALL-MAC.md)**: a step-by-step guide with what you should see at each step.
+
+Short version. [uv](https://docs.astral.sh/uv/) installs Python 3.12 and the packages, whatever Python your Mac has:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh      # once; then open a new Terminal window
+cd ~/Documents/llm-csv-labeler
+uv venv --python 3.12
+uv pip install -r requirements.txt
+cp .env.example .env && open -e .env                  # paste your key after OPENAI_API_KEY=
+uv run streamlit run app.py                           # opens the app in your browser
+```
+Next time, you only need the `cd` line and `uv run streamlit run app.py`.
 
 ## How to use
 
@@ -80,8 +74,9 @@ The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Cha
 | "API key missing" | Check that `.env` exists in the project folder and contains `OPENAI_API_KEY=sk-...`, then restart the app |
 | "OpenAI rejected the API key" | The key is wrong or was deleted. Create a new one in your OpenAI account |
 | Rows marked `failed` / rate-limit errors | Lower `MAX_CONCURRENT` in `config.py`, then Run again. Only failed rows are re-sent |
-| An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `streamlit run app.py` again. A browser refresh isn't enough |
-| `pip install` fails / "requires a different Python" | Install Python 3.12 from python.org, delete the `venv` folder, and repeat setup steps 3–4 |
+| Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in [INSTALL-MAC.md](INSTALL-MAC.md#if-something-goes-wrong) |
+| An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `uv run streamlit run app.py` again. A browser refresh isn't enough |
+| Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install -r requirements.txt` again |
 | CSV won't load | Save it as "CSV UTF-8" from Excel. The file needs a header row and at least one data row |
 | Many rows "empty" | Those rows have no text in the chosen column. Pick the column named in the warning |
 | Strange characters in Excel | The download is UTF-8 with BOM, so open it with a double-click rather than importing it as plain text |
