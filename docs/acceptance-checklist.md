@@ -47,7 +47,7 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 ## Handover
 | Item | Status | Evidence |
 |---|---|---|
-| Alex installs and runs the app from the README on his machine | ⏳ | README has macOS steps (Python 3.12+); pinned `requirements.txt` verified with a fresh install; needs Alex |
+| Alex installs and runs the app from the README on his machine | ⏳ | `INSTALL-MAC.md`: step-by-step guide for a non-technical user (uv installs Python 3.12 and the pinned packages), with an "If something goes wrong" table. The same uv commands were tested on a clean copy (Windows): install, 67 tests pass, and the app starts. Needs Alex |
 | Alex can change the model, batch size and test size in `config.py` | ✅ | Settings table in the README; every setting is commented in `config.py` |
 
 ## Model lifetime

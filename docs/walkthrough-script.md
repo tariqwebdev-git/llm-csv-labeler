@@ -4,7 +4,7 @@ Record with `sample_data/sample.csv` and `sample_data/sample_queries.json`. Abou
 
 | Time | Show | Say |
 |---|---|---|
-| 0:00 | Terminal: `source venv/bin/activate`, `streamlit run app.py` | "Start the app; it opens in the browser. The sidebar shows the key status, the model and the spend." |
+| 0:00 | Terminal: `cd ~/Documents/llm-csv-labeler`, `uv run streamlit run app.py` | "Start the app; it opens in the browser. The sidebar shows the key status, the model and the spend." |
 | 0:30 | Upload `sample.csv` | "Upload any CSV. You see the rows and columns. The text column is picked automatically; change it here." |
 | 0:50 | Choose the `housing_open` column, then back | "If many rows are empty in a column, a warning tells you and names a better one." |
 | 1:10 | Type `accident` in New query | "Short queries are often misread, so the app warns you. Write a full sentence instead." |
