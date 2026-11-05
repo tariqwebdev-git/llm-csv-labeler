@@ -19,7 +19,7 @@ You will type a few commands into **Terminal**, the Mac's built-in command windo
 
 ## Step 1: Get the project folder
 
-1. Save the zip file you received (`llm-csv-labeler-v1.0.0.zip`) to your **Downloads** folder.
+1. Save the zip file you received (e.g. `llm-csv-labeler-v1.0.1.zip`) to your **Downloads** folder.
 2. Double-click it. A folder named **`llm-csv-labeler`** appears next to it. (Safari sometimes unzips it for you; then the folder is already there.)
 3. Drag the `llm-csv-labeler` folder into your **Documents** folder.
 
