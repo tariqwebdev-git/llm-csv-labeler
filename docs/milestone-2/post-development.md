@@ -149,3 +149,14 @@ Alex installs alone, with no screen share and no Mac on our side, and may have a
 
 ## Note: commit history
 On 2026-11-05 the history was rewritten (all branches and tags, force-pushed) to remove the `Co-Authored-By` trailer from 25 commit messages. Tariq is the only author. Code is unchanged: every branch and tag points to the same tree as before, and only the commit IDs changed. Other clones must re-clone.
+
+## Part I: Conda-proof setup and `$` display fix (on `dev`, not released yet)
+**Alex's first test failed** with `TypeError: process() takes no keyword arguments`.
+- **Cause:** his conda `(base)` was active, so `uv pip install` / `uv run` used conda's base environment instead of `.venv`. That environment has `brotli` 1.0.9. When brotli is importable, httpx2 (inside the OpenAI SDK) asks for brotli-compressed replies and decodes them with `process(data, output_buffer_limit=…)`, which brotli < 1.2 doesn't accept. In a clean `.venv` brotli isn't installed, so this never happens.
+- **Fixed for Alex by message** (no new zip): `uv pip install --python .venv -r requirements.txt` and `.venv/bin/python -m streamlit run app.py`.
+- **Repo changes:**
+  - `INSTALL-MAC.md` and the README use those conda-proof commands, with a `.venv/bin/python --version` check, a conda note and troubleshooting rows.
+  - New `labeler/environment_check.py` plus a sidebar warning when the app isn't started from the project's own environment.
+- **`$` display bug** (seen in Alex's screenshot): Streamlit read the text between the two `$` signs in the card's estimate line as a maths formula. All `$` in card text are now escaped (`\$`).
+- **Tests:** 70 pass (new: environment check ×2, wrong-environment UI warning; the estimate test checks the escaping).
+- To be released as `v1.0.2` (`staging` → `main`, tag, zip) the next time Alex gets a new zip.

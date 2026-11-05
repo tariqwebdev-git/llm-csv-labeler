@@ -11,11 +11,11 @@ Short version. [uv](https://docs.astral.sh/uv/) installs Python 3.12 and the pac
 curl -LsSf https://astral.sh/uv/install.sh | sh      # once; then open a new Terminal window
 cd ~/Documents/llm-csv-labeler
 uv venv --python 3.12
-uv pip install -r requirements.txt
+uv pip install --python .venv -r requirements.txt
 cp .env.example .env && open -e .env                  # paste your key after OPENAI_API_KEY=
-uv run streamlit run app.py                           # opens the app in your browser
+.venv/bin/python -m streamlit run app.py              # opens the app in your browser
 ```
-Next time, you only need the `cd` line and `uv run streamlit run app.py`.
+Next time, you only need the `cd` line and `.venv/bin/python -m streamlit run app.py`. These commands always use the project's own `.venv`, so an active conda `(base)` can't interfere.
 
 ## How to use
 
@@ -75,8 +75,9 @@ The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Cha
 | "OpenAI rejected the API key" | The key is wrong or was deleted. Create a new one in your OpenAI account |
 | Rows marked `failed` / rate-limit errors | Lower `MAX_CONCURRENT` in `config.py`, then Run again. Only failed rows are re-sent |
 | Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in [INSTALL-MAC.md](INSTALL-MAC.md#if-something-goes-wrong) |
-| An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `uv run streamlit run app.py` again. A browser refresh isn't enough |
-| Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install -r requirements.txt` again |
+| An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `.venv/bin/python -m streamlit run app.py` again. A browser refresh isn't enough |
+| Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install --python .venv -r requirements.txt` again |
+| Sidebar warns "not running from its own environment", or `process() takes no keyword arguments` | The app was started with another Python (e.g. conda's base), which has different package versions. Start it with `.venv/bin/python -m streamlit run app.py`. If the error stays, delete `.venv` and repeat the install |
 | CSV won't load | Save it as "CSV UTF-8" from Excel. The file needs a header row and at least one data row |
 | Many rows "empty" | Those rows have no text in the chosen column. Pick the column named in the warning |
 | Strange characters in Excel | The download is UTF-8 with BOM, so open it with a double-click rather than importing it as plain text |

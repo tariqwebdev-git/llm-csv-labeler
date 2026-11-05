@@ -14,6 +14,7 @@ You will type a few commands into **Terminal**, the Mac's built-in command windo
 - **Paste** a command with **Cmd+V**, then press **Enter** to run it.
 - While a command runs, the window may look still for a while. That's normal, so wait until a new line ending in `%` appears.
 - Copy each command exactly as shown, one at a time.
+- If your Terminal lines start with `(base)`, you have Anaconda/conda installed. That's fine: the commands below always use the app's own environment, so conda can't interfere.
 
 ---
 
@@ -73,10 +74,17 @@ uv venv --python 3.12
 
 Then paste:
 ```
-uv pip install -r requirements.txt
+uv pip install --python .venv -r requirements.txt
 ```
 
 ✅ **You should see:** a list of names with `+` in front, and a line like **`Installed 52 packages`** (the number may differ slightly). The first time takes 1–2 minutes.
+
+Check that the app's own Python is ready. Paste:
+```
+.venv/bin/python --version
+```
+
+✅ **You should see:** `Python 3.12` followed by a number, e.g. `Python 3.12.10`.
 
 ## Step 6: Add your OpenAI key
 
@@ -97,7 +105,7 @@ Your key stays only in this file on your Mac. It's never shown in the app or sen
 
 Paste:
 ```
-uv run streamlit run app.py
+.venv/bin/python -m streamlit run app.py
 ```
 
 If it asks for your **Email**, just press **Enter**. This only happens the first time.
@@ -122,7 +130,7 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 2. Paste these two lines:
    ```
    cd ~/Documents/llm-csv-labeler
-   uv run streamlit run app.py
+   .venv/bin/python -m streamlit run app.py
    ```
 3. The app opens in your browser.
 
@@ -147,6 +155,8 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 | `command not found: uv` | Close Terminal completely (Cmd+Q) and open it again. If it still appears, paste `source $HOME/.local/bin/env` and try again. |
 | `No such file or directory` or `File not found: requirements.txt` | Terminal is not in the project folder. Repeat Step 4; `ls` must show `app.py`. |
 | An error during Step 5 | Check your internet connection and paste the same command again. It's safe to repeat. |
+| The sidebar says **"The app is not running from its own environment"**, or an error like `process() takes no keyword arguments` | The app was started with another Python (often conda's `(base)`). Stop it (Ctrl+C) and start it with the Step 7 command: `.venv/bin/python -m streamlit run app.py`. If the error stays, rebuild the environment: paste `rm -rf .venv`, repeat Step 5, then Step 7. |
+| `.venv/bin/python: No such file or directory` | Step 5 wasn't finished in this folder. Repeat Step 4 and Step 5. |
 | Terminal asks for an **Email** | Press Enter. It's optional. |
 | **API key missing** in the sidebar | The `.env` file is missing or the key wasn't saved. Repeat Step 6, then stop the app (Ctrl+C) and start it again (Step 7). |
 | **OpenAI rejected the API key** | The key was mistyped or deleted. Paste it again (Step 6), or create a new key in your OpenAI account. Then restart the app. |

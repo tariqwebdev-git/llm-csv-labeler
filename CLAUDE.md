@@ -10,7 +10,7 @@ A local Streamlit app for Alex Loewi (Upwork client). He uploads a CSV, picks a 
 ## Commands
 ```
 python -m venv venv && venv/Scripts/pip install -r requirements.txt   # Windows dev (macOS: venv/bin/pip)
-streamlit run app.py
+streamlit run app.py                                                  # Windows dev; Alex (macOS): .venv/bin/python -m streamlit run app.py
 python scripts/run_labeling_cli.py --help                             # headless run + accuracy check
 pytest
 python sample_data/make_sample.py                                      # regenerate synthetic data
@@ -22,6 +22,7 @@ python scripts/run_eval.py [--model gpt-4o-mini]                             # a
 - `app.py` + `ui/`: Streamlit only. They never call OpenAI, SQLite or the file system directly. They call `labeler.labeling_engine`.
 - `labeler/`: core logic, with no Streamlit imports (so it can be reused by a future hosted version).
 - `openai_client.py` is the only file that talks to OpenAI.
+- `environment_check.py`: the sidebar warns when the app is not started from the project's own env (conda base broke Alex's first run: old `brotli` there crashes the OpenAI SDK's reply decoding). Setup commands use `uv pip install --python .venv` and `.venv/bin/python -m streamlit` so conda can't interfere.
 - Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: **`gpt-6-luna` with `REASONING_EFFORT="none"`** (needed for logprobs). gpt-4o-mini/gpt-4o shut down 2027-01-14; gpt-4.1-nano already retired. Python **3.12+** (numpy pin); `requirements.txt` is pinned exactly.
 - **Batches stay small (10 rows / 1,000 tokens)**: bigger batches make answers drift between items (see docs/milestone-2/post-development.md). Batching is planned in `batch_planner.py`.
 - Tests use `tests/fake_classifier.py` (no API cost). Live checks use the CLI with `--limit`.

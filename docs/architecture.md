@@ -52,6 +52,7 @@ llm-csv-labeler/
 │   ├── models.py                 # types only: dataclasses and enums
 │   ├── errors.py                 # exception classes only
 │   ├── api_key.py                # load OPENAI_API_KEY from .env
+│   ├── environment_check.py      # is the app running from its own .venv? (sidebar warning)
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
 │   ├── openai_client.py          # the only OpenAI caller
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence
