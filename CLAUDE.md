@@ -43,6 +43,7 @@ python scripts/run_eval.py [--model gpt-4o-mini]                             # a
 
 ## Docs
 `docs/milestone-N/pre-development.md` (the plan) and `post-development.md` (what was built and what is pending). Update both as milestones progress.
+`INSTALL-MAC.md` is Alex's step-by-step install guide (uv, no Python knowledge needed). Keep it in step with the README's Setup section and with any change to the start command.
 
 ## Targets (beat the plan)
 1,000 rows in under 30 s and under $0.01 per query. The plan's targets are under 2 minutes and a few cents.
