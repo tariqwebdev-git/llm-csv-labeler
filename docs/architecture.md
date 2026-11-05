@@ -37,8 +37,13 @@ Rules:
 llm-csv-labeler/
 ├── app.py                        # Streamlit entry point (thin: layout only)
 ├── ui/
+│   ├── ui_models.py              # AppState type only
+│   ├── session.py                # get_state() from st.session_state
 │   ├── sidebar.py                # key status, model, session spend, clear cache
 │   ├── upload_section.py         # upload, column picker, preview
+│   ├── query_actions.py          # state rules: add/edit/delete/record results (no drawing)
+│   ├── result_tables.py          # preview order, test-run split
+│   ├── query_list_section.py     # add-query form + all cards
 │   ├── query_card.py             # one card: edit, test, run, delete, stats box
 │   ├── query_file_section.py     # save/load queries JSON
 │   └── download_section.py       # labelled CSV download
@@ -46,6 +51,7 @@ llm-csv-labeler/
 │   ├── config.py                 # settings only: model, prices, batch size, limits
 │   ├── models.py                 # types only: dataclasses and enums
 │   ├── errors.py                 # exception classes only
+│   ├── api_key.py                # load OPENAI_API_KEY from .env
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
 │   ├── openai_client.py          # the only OpenAI caller
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence

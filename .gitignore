@@ -15,3 +15,10 @@ __pycache__/
 .vscode/
 .idea/
 .DS_Store
+
+# generated stress-test data
+sample_data/stress.csv
+sample_data/stress_key.csv
+
+# client data: never commit
+data/
