@@ -146,3 +146,6 @@ Alex installs alone, with no screen share and no Mac on our side, and may have a
   - the internal "Changes from the plan" and Git sections are removed
 - `INSTALL-MAC.md` step 1 names the zip version-free ("e.g. …v1.0.1.zip").
 - No app code changed; the walkthrough video recorded on v1.0.0 is still valid.
+
+## Note: commit history
+On 2026-11-05 the history was rewritten (all branches and tags, force-pushed) to remove the `Co-Authored-By` trailer from 25 commit messages. Tariq is the only author. Code is unchanged: every branch and tag points to the same tree as before, and only the commit IDs changed. Other clones must re-clone.
