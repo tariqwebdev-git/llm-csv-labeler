@@ -19,10 +19,9 @@ You will type a few commands into **Terminal**, the Mac's built-in command windo
 
 ## Step 1: Get the project folder
 
-1. Download the project zip file (from GitHub: green **Code** button → **Download ZIP**, or the zip file sent to you).
-2. Double-click the zip in your **Downloads** folder. A folder appears next to it. (Safari sometimes unzips it for you; then the folder is already there.)
-3. Rename that folder to **`llm-csv-labeler`** (click it once, press Enter, type the name, press Enter).
-4. Drag the folder into your **Documents** folder.
+1. Save the zip file you received (`llm-csv-labeler-v1.0.0.zip`) to your **Downloads** folder.
+2. Double-click it. A folder named **`llm-csv-labeler`** appears next to it. (Safari sometimes unzips it for you; then the folder is already there.)
+3. Drag the `llm-csv-labeler` folder into your **Documents** folder.
 
 ✅ **You should see:** a folder named `llm-csv-labeler` in Documents, containing `app.py`, `README.md` and this guide.
 
@@ -131,9 +130,10 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 
 ## Getting a new version
 
-1. Download and unzip the new version (Step 1). Name the folder `llm-csv-labeler` again, after renaming the old one (e.g. `llm-csv-labeler-old`).
-2. Copy your `.env` file from the old folder into the new one. It's hidden in Finder: press **Cmd+Shift+.** (full stop) to show hidden files.
-3. In Terminal, run Step 4 and Step 5 again, then start the app as usual.
+1. In Documents, rename the old folder to `llm-csv-labeler-old`.
+2. Unzip the new version and move it into Documents (Step 1).
+3. Copy your `.env` file from the old folder into the new one. It's hidden in Finder: press **Cmd+Shift+.** (full stop) to show hidden files.
+4. In Terminal, run Step 4 and Step 5 again, then start the app as usual.
 
 ---
 

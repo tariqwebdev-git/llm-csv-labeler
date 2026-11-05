@@ -1,2 +1,9 @@
 * text=auto eol=lf
 *.csv text eol=lf
+
+# Internal files left out of the client zip (git archive)
+CLAUDE.md export-ignore
+docs/milestone-1/ export-ignore
+docs/milestone-2/ export-ignore
+docs/walkthrough-script.md export-ignore
+.gitattributes export-ignore

@@ -100,7 +100,7 @@ Debatable rows ("bike hit while parked", "hit my dog", "teenagers nearly knocked
 ## Pending (needs Alex)
 1. His real CSV plus 20 hand-labelled rows per query; then run `scripts/run_eval.py`-style checks and fill in the ⏳ rows.
 2. His install from the README; then he deletes the "highlighter-dev" key.
-3. Release: `staging` → `main` and tag `v1.0.0` after his real-data check.
+3. ~~Release~~ Done: `v1.0.0` on `main` (Part G).
 
 ## Part E: Production hardening (done)
 ### Model replaced: `gpt-4o-mini` → `gpt-6-luna`
@@ -127,3 +127,11 @@ Alex installs alone, with no screen share and no Mac on our side, and may have a
 - **README Setup** now points to the guide, and its short version uses the same uv commands (one way to install). The troubleshooting table has a blank-page row.
 - The walkthrough script and acceptance checklist were updated.
 - **Verified on a clean copy** (`git archive`, Windows): `uv venv --python 3.12` + `uv pip install -r requirements.txt` → 52 packages, `uv run pytest` → 67 pass, and `uv run streamlit run app.py` → health check 200. Not tested on a real Mac (none available); the commands are uv's standard cross-platform ones.
+
+## Part G: Release v1.0.0 (done)
+- **Handover:** Alex gets a zip (no GitHub access). It is built from the tag: `git archive --format=zip --prefix=llm-csv-labeler/ -o output/llm-csv-labeler-v1.0.0.zip v1.0.0`, so it unzips to the folder name used in `INSTALL-MAC.md`.
+- **Left out of the zip** (`export-ignore` in `.gitattributes`): `CLAUDE.md`, `docs/milestone-*`, `docs/walkthrough-script.md` and `.gitattributes`, which are internal notes. `.env`, `cache.db` and `data/` are never in git, so they're never in the zip.
+- **The zip contains:** the app, `labeler/`, `ui/`, `tests/`, `scripts/`, `sample_data/`, `README.md`, `INSTALL-MAC.md`, `requirements.txt`, `.env.example`, `docs/architecture.md` and `docs/acceptance-checklist.md`.
+- `INSTALL-MAC.md` step 1 was changed for the zip. The README's developer note points to `docs/architecture.md`.
+- The walkthrough script was rewritten for Alex's election CSV.
+- Released `dev` → `staging` → `main`, tagged `v1.0.0`.

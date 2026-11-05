@@ -90,4 +90,4 @@ python scripts/run_labeling_cli.py --help    # run one query from the terminal
 python scripts/run_eval.py                   # accuracy of 4 queries on sample.csv (~$0.005)
 python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   # 5,000-row stress test (~$0.19)
 ```
-`sample_data/sample_queries.json` holds example queries to load in the app. See `CLAUDE.md` and `docs/` for the architecture and milestone notes.
+`sample_data/sample_queries.json` holds example queries to load in the app. See `docs/architecture.md` for how the code is organised.

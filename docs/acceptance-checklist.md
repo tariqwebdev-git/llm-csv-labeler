@@ -55,5 +55,5 @@ Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previ
 
 ## Open items for Alex
 1. Send the real CSV and 2–3 queries with 20 hand-labelled rows each, and choose the accuracy target X.
-2. Install from the README, then delete the "highlighter-dev" key and use his own.
+2. Install with `INSTALL-MAC.md`, then delete the "highlighter-dev" key and use his own.
 3. Decide on v2 ideas: an "invert" option for "does not" queries, labelling several columns combined, a hosted version.
