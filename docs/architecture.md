@@ -36,22 +36,30 @@ Rules:
 ```
 llm-csv-labeler/
 ├── app.py                        # Streamlit entry point (thin: layout only)
+├── .streamlit/config.toml       # less padding above/below the fixed bars
 ├── ui/
 │   ├── ui_models.py              # AppState type only
 │   ├── session.py                # get_state() from st.session_state
-│   ├── sidebar.py                # key status, model, session spend, clear cache
-│   ├── upload_section.py         # upload, column picker, preview
+│   ├── page_style.py + .css      # custom CSS: one-window layout, only the query area scrolls; compact upload (no "<" in the CSS)
+│   ├── upload_section.py         # top bar: compact file picker + text column
+│   ├── session_info.py           # top right: key status, spend, Settings (model, Clear cache); warnings
+│   ├── query_form_section.py     # top bar: single-line Create Query form
+│   ├── data_preview_section.py   # empty-row warnings + preview (collapsed by default)
 │   ├── query_actions.py          # state rules: add/edit/delete/record results (no drawing)
 │   ├── result_tables.py          # preview order, test-run split
-│   ├── query_list_section.py     # add-query form + all cards
-│   ├── query_card.py             # one card: edit, test, run, delete, stats box
-│   ├── query_file_section.py     # save/load queries JSON
-│   └── download_section.py       # labelled CSV download
+│   ├── answer_table.py           # every answers table: wrapped rows, double-click for full text
+│   ├── query_list_section.py     # all cards (the main part of the page)
+│   ├── query_card.py             # one card: collapsible header, edit, test, run, delete, stats box
+│   ├── query_file_section.py     # bottom bar: Save queries, Load queries (popover)
+│   ├── download_section.py       # bottom bar: Download CSV (new columns after the text column)
+│   └── reading_list_sidebar.py   # sidebar: non-empty answers of the chosen column
 ├── labeler/
 │   ├── config.py                 # settings only: model, prices, batch size, limits
 │   ├── models.py                 # types only: dataclasses and enums
 │   ├── errors.py                 # exception classes only
 │   ├── api_key.py                # load OPENAI_API_KEY from .env
+│   ├── environment_check.py      # is the app running from its own .venv? (warning at the top)
+│   ├── python_version_check.py   # stops the app with a clear message on Python older than 3.12
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
 │   ├── openai_client.py          # the only OpenAI caller
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence
@@ -64,7 +72,7 @@ llm-csv-labeler/
 │   ├── result_cache.py           # SQLite cache
 │   ├── csv_io.py                 # read (encoding/delimiter), write bytes
 │   ├── column_utils.py           # column naming, text-column detection
-│   ├── output_builder.py         # attach label/conf/note columns to the table
+│   ├── output_builder.py         # insert label/conf/note columns after the text column
 │   └── query_store.py            # queries <-> JSON
 ├── scripts/
 │   ├── run_labeling_cli.py       # run one query from the terminal (+ accuracy check vs a key)

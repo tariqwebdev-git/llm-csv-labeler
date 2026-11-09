@@ -43,6 +43,12 @@ def count_empty(df: pd.DataFrame, column: str) -> int:
     return sum(1 for value in df[column] if not sanitize_text(str(value)))
 
 
+def non_empty_answers(df: pd.DataFrame, column: str) -> pd.Series:
+    """The rows of `column` that have text (same rule as count_empty), with their row numbers."""
+    values = df[column]
+    return values[[bool(sanitize_text(str(value))) for value in values]]
+
+
 def column_with_fewest_empty(df: pd.DataFrame) -> str:
     """The column that has text in the most rows; ties go to the longest average text."""
     return min(df.columns, key=lambda col: (count_empty(df, col), -_average_length(df, col)))

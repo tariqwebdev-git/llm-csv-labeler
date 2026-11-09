@@ -14,6 +14,7 @@ You will type a few commands into **Terminal**, the Mac's built-in command windo
 - **Paste** a command with **Cmd+V**, then press **Enter** to run it.
 - While a command runs, the window may look still for a while. That's normal, so wait until a new line ending in `%` appears.
 - Copy each command exactly as shown, one at a time.
+- If your Terminal lines start with `(base)`, you have Anaconda/conda installed. That's fine: the commands below always use the app's own environment, so conda can't interfere.
 
 ---
 
@@ -73,10 +74,17 @@ uv venv --python 3.12
 
 Then paste:
 ```
-uv pip install -r requirements.txt
+uv pip install --python .venv -r requirements.txt
 ```
 
 ✅ **You should see:** a list of names with `+` in front, and a line like **`Installed 52 packages`** (the number may differ slightly). The first time takes 1–2 minutes.
+
+Check that the app's own Python is ready. Paste:
+```
+.venv/bin/python --version
+```
+
+✅ **You should see:** `Python 3.12` followed by a number, e.g. `Python 3.12.10`.
 
 ## Step 6: Add your OpenAI key
 
@@ -97,19 +105,19 @@ Your key stays only in this file on your Mac. It's never shown in the app or sen
 
 Paste:
 ```
-uv run streamlit run app.py
+.venv/bin/python -m streamlit run app.py
 ```
 
 If it asks for your **Email**, just press **Enter**. This only happens the first time.
 
-✅ **You should see:** in Terminal, `You can now view your Streamlit app in your browser` and `Local URL: http://localhost:8501`. Your browser opens the app, and the left sidebar shows a green **API key found**.
+✅ **You should see:** in Terminal, `You can now view your Streamlit app in your browser` and `Local URL: http://localhost:8501`. Your browser opens the app, and the top right corner shows a green **API key**.
 
 **Keep the Terminal window open while you use the app.** Closing it stops the app.
 
 ## Step 8: Quick check (costs less than 1 cent)
 
 1. In the app, **upload** `sample_data/sample.csv` from the project folder.
-2. In **Save or load queries**, load `sample_data/sample_queries.json`.
+2. Click **Load queries** at the bottom of the window and choose `sample_data/sample_queries.json`.
 3. On one of the query cards, click **Test (20 rows)**.
 
 ✅ **You should see:** after a few seconds, tables of matched and not matched rows. Everything works, and you're done.
@@ -122,7 +130,7 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 2. Paste these two lines:
    ```
    cd ~/Documents/llm-csv-labeler
-   uv run streamlit run app.py
+   .venv/bin/python -m streamlit run app.py
    ```
 3. The app opens in your browser.
 
@@ -130,10 +138,22 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 
 ## Getting a new version
 
-1. In Documents, rename the old folder to `llm-csv-labeler-old`.
-2. Unzip the new version and move it into Documents (Step 1).
-3. Copy your `.env` file from the old folder into the new one. It's hidden in Finder: press **Cmd+Shift+.** (full stop) to show hidden files.
-4. In Terminal, run Step 4 and Step 5 again, then start the app as usual.
+You don't need to install everything again. Your key, your saved results and the installed packages stay where they are.
+
+1. Stop the app: click the Terminal window and press **Ctrl+C**.
+2. Put the new zip in your **Downloads** folder (don't unzip it yourself).
+3. Paste these lines one at a time and press Enter after each:
+   ```
+   cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'
+   ditto ~/Downloads/llm-csv-labeler ~/Documents/llm-csv-labeler
+   rm -rf ~/Downloads/llm-csv-labeler
+   cd ~/Documents/llm-csv-labeler
+   uv pip install --python .venv -r requirements.txt
+   .venv/bin/python -m streamlit run app.py
+   ```
+   If your project folder is somewhere else (for example `~/Code/llm-csv-labeler`), use that path in lines 2 and 4. If Safari already unzipped the file (there's a `llm-csv-labeler` folder in Downloads), skip the first line. The `rm` line only removes the copy in Downloads.
+
+✅ **You should see:** the app opens as usual. The install line finishes in a few seconds and only lists packages that changed (or says everything is already installed).
 
 ---
 
@@ -147,8 +167,10 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 | `command not found: uv` | Close Terminal completely (Cmd+Q) and open it again. If it still appears, paste `source $HOME/.local/bin/env` and try again. |
 | `No such file or directory` or `File not found: requirements.txt` | Terminal is not in the project folder. Repeat Step 4; `ls` must show `app.py`. |
 | An error during Step 5 | Check your internet connection and paste the same command again. It's safe to repeat. |
+| A yellow warning says **"The app is not running from its own environment"**, or an error like `process() takes no keyword arguments` | The app was started with another Python (often conda's `(base)`). Stop it (Ctrl+C) and start it with the Step 7 command: `.venv/bin/python -m streamlit run app.py`. If the error stays, rebuild the environment: paste `rm -rf .venv`, repeat Step 5, then Step 7. |
+| `.venv/bin/python: No such file or directory` | Step 5 wasn't finished in this folder. Repeat Step 4 and Step 5. |
 | Terminal asks for an **Email** | Press Enter. It's optional. |
-| **API key missing** in the sidebar | The `.env` file is missing or the key wasn't saved. Repeat Step 6, then stop the app (Ctrl+C) and start it again (Step 7). |
+| **API key missing** (red box at the top) | The `.env` file is missing or the key wasn't saved. Repeat Step 6, then stop the app (Ctrl+C) and start it again (Step 7). |
 | **OpenAI rejected the API key** | The key was mistyped or deleted. Paste it again (Step 6), or create a new key in your OpenAI account. Then restart the app. |
 | Every row is marked **failed** | Your OpenAI account may be out of credit or at its spending limit. Check **Billing** on the OpenAI website, then click **Run** again. Only the failed rows are re-sent. |
 | The app suddenly stopped working | The Terminal window was closed. Start the app again (see "Every day after that"). |

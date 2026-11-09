@@ -37,7 +37,7 @@ def _upload(at: AppTest, data: bytes = SAMPLE, name: str = "sample.csv") -> AppT
 
 
 def _add(at: AppTest, text: str) -> AppTest:
-    at.text_area(key="new_query_text").input(text).run()
+    at.text_input(key="new_query_text").input(text).run()
     return at.button(key="add_query").click().run()
 
 
@@ -53,7 +53,7 @@ def _click(at: AppTest, kind: str, index: int = 0) -> AppTest:
 def test_upload_shows_preview_and_picks_text_column(make_app):
     at = _upload(make_app())
     assert not at.exception
-    assert "220 rows" in at.markdown[0].value
+    assert any("220 rows" in e.label for e in at.expander)        # data preview header
     assert at.selectbox(key="text_column_select").value == "transportation_open"
 
 
@@ -69,7 +69,7 @@ def test_run_disabled_without_key(make_app):
     query_id = _state(at).queries[0].id
     assert at.button(key=f"run_{query_id}").disabled
     assert at.button(key=f"test_{query_id}").disabled
-    assert any("API key missing" in e.value for e in at.sidebar.error)
+    assert any("API key missing" in e.value for e in at.error)
 
 
 def test_test_run_uses_20_rows(make_app):
@@ -134,10 +134,72 @@ def test_empty_rows_warning_names_better_column(make_app):
 
 def test_short_query_warning(make_app):
     at = _upload(make_app())
-    at.text_area(key="new_query_text").input("accident").run()
+    at.text_input(key="new_query_text").input("accident").run()
     assert any("Short queries" in w.value for w in at.warning)
 
 
 def test_card_shows_test_and_full_estimates(make_app):
     at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
-    assert any("test $" in c.value and "for 20 rows" in c.value and "full run $" in c.value for c in at.caption)
+    # "$" is escaped, otherwise Streamlit shows the text between two "$" as a maths formula
+    assert any("test \\$" in c.value and "for 20 rows" in c.value and "full run \\$" in c.value
+               for c in at.caption)
+
+
+def test_wrong_environment_warning(make_app, monkeypatch):
+    import ui.session_info as session_info
+    assert not any("own environment" in w.value for w in make_app().warning)
+    monkeypatch.setattr(session_info, "running_in_project_env", lambda: False)
+    assert any("own environment" in w.value for w in make_app().warning)
+
+
+def test_query_box_is_one_line_with_hint_as_placeholder(make_app):
+    from ui.query_form_section import QUERY_PLACEHOLDER
+    at = make_app()
+    box = at.text_input(key="new_query_text")
+    assert "full sentence" in QUERY_PLACEHOLDER and box.proto.placeholder == QUERY_PLACEHOLDER
+    assert not at.text_area                                  # no multi-line box any more
+
+
+def test_no_big_headers(make_app):
+    at = _upload(make_app())
+    assert not at.title and not at.header
+
+
+def test_card_collapses_to_its_name(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    query_id = _state(at).queries[0].id
+    assert at.button(key=f"run_{query_id}")                  # open by default
+    at = _click(at, "toggle")
+    assert not [b for b in at.button if b.key == f"run_{query_id}"]
+    assert any("person_hit_vehicle" in m.value for m in at.markdown)
+    at = _click(at, "toggle")
+    assert at.button(key=f"run_{query_id}")
+
+
+def test_download_puts_new_columns_after_text_column(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    at = _click(_click(_add(at, "Mentions buses being late"), "run", 0), "run", 1)
+    columns = list(labeled_table(_state(at)).columns)
+    start = columns.index("transportation_open")
+    assert columns[start:start + 7] == [
+        "transportation_open",
+        "person_hit_vehicle", "person_hit_vehicle_conf", "person_hit_vehicle_note",
+        "buses_being_late", "buses_being_late_conf", "buses_being_late_note",
+    ]
+    assert columns[start + 7] == "housing_open"              # original order kept around them
+
+
+def test_sidebar_lists_answers_of_chosen_column(make_app):
+    at = _upload(make_app())
+    assert any("**transportation_open**" in m.value for m in at.sidebar.markdown)
+    at.selectbox(key="text_column_select").select("housing_open").run()
+    assert any("**housing_open**" in m.value for m in at.sidebar.markdown)
+    shown = at.sidebar.dataframe[0].value
+    assert list(shown.columns) == ["housing_open"] and (shown["housing_open"].str.strip() != "").all()
+
+
+def test_old_python_stops_with_message(make_app, monkeypatch):
+    monkeypatch.setattr("labeler.python_version_check.python_too_old", lambda: True)
+    at = make_app()
+    assert any("needs Python 3.12" in e.value for e in at.error)
+    assert not [w for w in at.text_input if w.key == "new_query_text"]   # nothing else drawn
