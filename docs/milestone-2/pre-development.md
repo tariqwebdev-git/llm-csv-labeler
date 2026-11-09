@@ -89,3 +89,33 @@ Card behaviour:
 - `pytest` passes.
 - The live accuracy table above.
 - A manual browser check: 2 cards on `sample.csv`, then Test, Run, Edit, Delete, save/load and download.
+
+---
+
+# Part J: Alex's UI changes + rest of Milestone 2 (`feature/ui-rework`, 2026-11-09)
+
+## Context
+After using v1.0.1, Alex sent a list of changes. Asad split it: **Part 1 (in contract)** is a UI rework that makes the query list the main focus, plus the rest of Milestone 2. **Part 2 (add-ons: Claude option, row filter per query, a workspace per column, keyword queries)** is not started until it's planned with Asad. Hosting is quoted separately.
+
+Estimate: **1 day** (all of Part 1 was done on 2026-11-09).
+
+## Part 1 items
+1. **Long responses:** wrap text in every table (sidebar, test previews, results, data preview); click to read the full text. Hover was tried first: `st.dataframe` has no per-cell tooltip, so we use the native click overlay (Asad's fallback).
+2. **Collapsible cards:** the whole card collapses to its name (+ status). This uses an arrow button, not an outer expander, because Test and Results are already expanders inside the card.
+3. **Save / download:** small buttons in a bar fixed at the bottom of the window.
+4. **Top bar:** compact upload + text column fixed at the top, key status and spend small at the top right, Create Query just below. Spreadsheet preview in a section collapsed by default.
+5. **Query input:** single line, with the "Write a full sentence…" hint as the placeholder.
+6. **Headers:** remove the big headers.
+7. **Download column order:** each query's 3 columns go right after the text column (`df.insert`), in query order.
+8. **Sidebar reading list:** wider sidebar listing the non-empty answers of the chosen column; it updates when the column changes.
+
+Fixed bars use custom CSS (`.st-key-*` selectors only) and are checked at several window widths.
+
+## Rest of Milestone 2
+- Pinned versions: already done (Part E). Streamlit 1.66.1 is pinned, so the CSS can't break on an update.
+- README conda commands + conda troubleshooting: mostly done (Part I); add a "Terminal shows (base)" row.
+- README + INSTALL-MAC "Updating to a new version" without reinstalling everything.
+- Python version check. **Minimum 3.12, not 3.10:** the pinned numpy needs 3.12, so 3.10/3.11 would fail at install anyway.
+- Regression check: test run, estimate, cache, refusal flags, save/load.
+- Tests for parsing, refusals, missing rows and CSV edge cases, with OpenAI mocked.
+- Walkthrough video (≤ 5 min) and the final acceptance-checklist pass.

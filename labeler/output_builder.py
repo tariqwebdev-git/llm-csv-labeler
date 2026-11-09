@@ -12,13 +12,19 @@ def result_column_names(name: str) -> tuple[str, str, str]:
     return name, f"{name}{CONFIDENCE_SUFFIX}", f"{name}{NOTE_SUFFIX}"
 
 
-def add_result_columns(df: pd.DataFrame, name: str, labels: list[RowLabel]) -> pd.DataFrame:
-    """Return a copy of df with the 3 result columns appended. Blank = not labelled."""
+def add_result_columns(df: pd.DataFrame, name: str, labels: list[RowLabel],
+                       after: str | None = None) -> pd.DataFrame:
+    """Return a copy of df with the 3 result columns added. Blank = not labelled.
+
+    The columns go right after the column `after` (e.g. the text column, or the
+    previous query's note column). Without `after` they go at the end.
+    """
     if len(labels) != len(df):
         raise ValueError(f"Got {len(labels)} labels for {len(df)} rows.")
     label_col, conf_col, note_col = result_column_names(name)
-    out = df.copy()
-    out[label_col] = ["" if r.label is None else str(r.label) for r in labels]
-    out[conf_col] = ["" if r.confidence is None else f"{r.confidence:.2f}" for r in labels]
-    out[note_col] = [r.note.value if r.note else "" for r in labels]
+    out = df.drop(columns=[label_col, conf_col, note_col], errors="ignore")   # re-run replaces
+    position = out.columns.get_loc(after) + 1 if after is not None else len(out.columns)
+    out.insert(position, label_col, ["" if r.label is None else str(r.label) for r in labels])
+    out.insert(position + 1, conf_col, ["" if r.confidence is None else f"{r.confidence:.2f}" for r in labels])
+    out.insert(position + 2, note_col, [r.note.value if r.note else "" for r in labels])
     return out

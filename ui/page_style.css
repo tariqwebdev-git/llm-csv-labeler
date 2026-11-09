@@ -1,0 +1,79 @@
+/* Page layout styles. Selectors use only .st-key-NAME classes (from st.container(key="NAME"))
+   and data-testid attributes, which Streamlit keeps stable. Streamlit is pinned in
+   requirements.txt so an update cannot silently change them.
+   Never write a "less than" sign in this file: Streamlit then drops the whole style block. */
+
+/* Layout: the page is exactly one window high and does not scroll itself.
+   Top bar at the top, bottom bar at the bottom, and only the query area between them
+   scrolls. This keeps working when the window is resized or the bars change height. */
+[data-testid="stMainBlockContainer"] {
+  height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > * {
+  flex-shrink: 0;               /* the bars keep their natural height */
+}
+
+/* Query area: takes all the space left between the bars and scrolls inside.
+   It never gets smaller than 14rem; on a very small window the page scrolls instead. */
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:has(> .st-key-query_area) {
+  flex: 1 1 auto;
+  min-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;       /* room for the scrollbar */
+}
+
+/* Sidebar: at most 45% of the window, even when dragged wider, so the query area keeps room. */
+[data-testid="stSidebar"] {
+  max-width: 45vw;
+}
+
+/* Top bar on a narrow window: columns wrap onto a new line instead of squeezing
+   their text into a few letters per line. */
+.st-key-top_bar [data-testid="stHorizontalBlock"] {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+.st-key-top_bar [data-testid="stColumn"] {
+  min-width: 9rem;
+}
+.st-key-top_bar [data-testid="stColumn"]:has(.st-key-session_info) {
+  min-width: 7.5rem;            /* key status and spend are short */
+}
+.st-key-top_bar [data-testid="stColumn"]:has(.st-key-add_query) {
+  min-width: 4rem;              /* the Add button needs less room */
+}
+
+/* Bottom bar: small buttons that fit on one line. */
+.st-key-bottom_bar button {
+  min-height: 2rem;
+  padding: 0.15rem 0.6rem;
+}
+.st-key-bottom_bar button p {
+  font-size: 0.85rem;
+}
+
+/* Thin lines that separate the bars from the scrolling query area. */
+.st-key-top_bar {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(49, 51, 63, 0.15);
+}
+.st-key-bottom_bar {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(49, 51, 63, 0.15);
+}
+
+/* Compact file picker: one short row instead of the large drop zone. */
+.st-key-top_bar [data-testid="stFileUploaderDropzone"] {
+  padding: 0.25rem 0.75rem;
+}
+.st-key-top_bar [data-testid="stFileUploaderDropzoneInstructions"] {
+  display: none;
+}

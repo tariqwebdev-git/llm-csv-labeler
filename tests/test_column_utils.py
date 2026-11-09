@@ -4,6 +4,7 @@ from labeler.column_utils import (
     column_with_fewest_empty,
     count_empty,
     guess_text_column,
+    non_empty_answers,
     suggest_column_name,
     to_column_name,
     unique_column_name,
@@ -33,3 +34,10 @@ def test_count_empty_and_best_column():
     df = pd.DataFrame({"a": ["", "  ", "x", "|"], "b": ["t", "t", "t", ""]})
     assert count_empty(df, "a") == 3          # blank, spaces and a lone pipe are all empty
     assert column_with_fewest_empty(df) == "b"
+
+
+def test_non_empty_answers_keeps_row_numbers():
+    df = pd.DataFrame({"a": ["first", "", "  ", "fourth"]})
+    answers = non_empty_answers(df, "a")
+    assert answers.tolist() == ["first", "fourth"]
+    assert answers.index.tolist() == [0, 3]

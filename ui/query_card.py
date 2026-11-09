@@ -1,4 +1,4 @@
-"""One query card: name, wording, status, results box, and Edit / Test / Run / Delete."""
+"""One query card: collapsible header (name, status), wording, results, and Edit / Test / Run / Delete."""
 import pandas as pd
 import streamlit as st
 
@@ -6,6 +6,7 @@ from labeler import config
 from labeler.errors import ApiConfigError, ApiKeyError
 from labeler.labeling_engine import estimate_cost, pick_test_rows, run_query
 from labeler.models import CostEstimate, Query
+from ui.answer_table import READ_HINT, show_table
 from ui.query_actions import delete_query, record_run, record_test, update_query_text
 from ui.result_tables import full_preview, split_test_rows
 from ui.ui_models import AppState, QueryRun
@@ -18,44 +19,63 @@ def _estimate(file_id: str, column: str, query_text: str, cache_version: int, _t
 
 
 def render(state: AppState, query: Query, api_key: str | None) -> None:
-    """Draw one query card."""
+    """Draw one query card. Collapsed, it shows only the name and status."""
+    with st.container(border=True, key=_key("card", query)):
+        collapsed = _header(query)
+        if not collapsed:
+            _body(state, query, api_key)
+
+
+def _header(query: Query) -> bool:
+    """Arrow + name + status on one line. Returns True if the card is collapsed."""
+    collapsed_key = _key("collapsed", query)
+    collapsed = st.session_state.get(collapsed_key, False)
+    arrow, title = st.columns([1, 30], gap="small", vertical_alignment="center")
+    if arrow.button("", key=_key("toggle", query), type="tertiary",
+                    icon=":material/chevron_right:" if collapsed else ":material/expand_more:",
+                    help="Show the card" if collapsed else "Collapse the card"):
+        st.session_state[collapsed_key] = not collapsed
+        st.rerun()
+    title.markdown(f"**{query.name}** &nbsp; :small[:gray[{query.status.value}]]")
+    return collapsed
+
+
+def _body(state: AppState, query: Query, api_key: str | None) -> None:
+    """Everything under the header: wording, estimate, buttons, test and results."""
     ready = state.df is not None and state.text_column is not None
     editing = st.session_state.get(_key("editing", query), False)
 
-    with st.container(border=True):
-        st.subheader(query.name)
-        if editing:
-            _editor(state, query)
-        else:
-            st.write(query.text)
-        st.caption(f"Status: **{query.status.value}**")
+    if editing:
+        _editor(state, query)
+    else:
+        st.write(query.text)
 
-        full = state.full_runs.get(query.id)
-        if full:
-            _stats_box(full)
-        if ready and not editing:
-            column = state.df[state.text_column]
-            test_texts = column.iloc[pick_test_rows(len(column))].tolist()
-            test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
-                                 state.cache_version, test_texts)
-            full_est = _estimate(state.file_id, state.text_column, query.text,
-                                 state.cache_version, column.tolist())
-            # "\$" stops Streamlit reading the text between two $ signs as a maths formula.
-            st.caption(f"Estimate: test \\${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
-                       f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
-                       f"({full_est.rows_cached:,} already cached)")
+    full = state.full_runs.get(query.id)
+    if full:
+        _stats_box(full)
+    if ready and not editing:
+        column = state.df[state.text_column]
+        test_texts = column.iloc[pick_test_rows(len(column))].tolist()
+        test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
+                             state.cache_version, test_texts)
+        full_est = _estimate(state.file_id, state.text_column, query.text,
+                             state.cache_version, column.tolist())
+        # "\$" stops Streamlit reading the text between two $ signs as a maths formula.
+        st.caption(f"Estimate: test \\${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
+                   f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
+                   f"({full_est.rows_cached:,} already cached)")
 
-        _buttons(state, query, api_key, can_run=ready and bool(api_key) and not editing)
-        _delete_confirmation(state, query)
+    _buttons(state, query, api_key, can_run=ready and bool(api_key) and not editing)
+    _delete_confirmation(state, query)
 
-        test = state.test_runs.get(query.id)
-        if test and ready:
-            _test_preview(state, query, test)
-        if full and ready:
-            with st.expander("Results: rows needing attention first, then lowest confidence"):
-                st.caption("Confidence close to 0.50 means the model was unsure.")
-                st.dataframe(full_preview(state.df, state.text_column, query.name,
-                                          full.result.labels, config.RESULT_PREVIEW_ROWS))
+    test = state.test_runs.get(query.id)
+    if test and ready:
+        _test_preview(state, query, test)
+    if full and ready:
+        with st.expander("Results: rows needing attention first, then lowest confidence"):
+            st.caption(f"Confidence close to 0.50 means the model was unsure. {READ_HINT}")
+            show_table(full_preview(state.df, state.text_column, query.name,
+                                    full.result.labels, config.RESULT_PREVIEW_ROWS), state.text_column)
 
 
 def _key(kind: str, query: Query) -> str:
@@ -83,15 +103,17 @@ def _stats_box(run: QueryRun) -> None:
 
 
 def _buttons(state: AppState, query: Query, api_key: str | None, can_run: bool) -> None:
-    edit, test, run, delete = st.columns(4)
-    if edit.button("Edit", key=_key("edit", query)):
+    with st.container(horizontal=True, gap="small"):   # buttons side by side, left-aligned
+        edit = st.button("Edit", key=_key("edit", query))
+        test = st.button("Test (20 rows)", key=_key("test", query), disabled=not can_run)
+        run = st.button("Run", key=_key("run", query), disabled=not can_run, type="primary")
+        delete = st.button("Delete", key=_key("delete", query))
+    if edit:
         st.session_state[_key("editing", query)] = True
         st.rerun()
-    if test.button("Test (20 rows)", key=_key("test", query), disabled=not can_run):
-        _run(state, query, api_key, test_only=True)
-    if run.button("Run", key=_key("run", query), disabled=not can_run, type="primary"):
-        _run(state, query, api_key, test_only=False)
-    if delete.button("Delete", key=_key("delete", query)):
+    if test or run:
+        _run(state, query, api_key, test_only=test)
+    if delete:
         st.session_state[_key("confirm_delete", query)] = True
         st.rerun()
 
@@ -135,13 +157,14 @@ def _test_preview(state: AppState, query: Query, test: QueryRun) -> None:
         state.df, state.text_column, query.name, test.row_indices, test.result.labels)
     with st.expander(f"Test on {len(test.row_indices)} rows: {len(matched)} matched, "
                      f"{len(unmatched)} not matched · cost \\${test.result.stats.cost_usd:.4f}", expanded=True):
+        st.caption(READ_HINT)
         st.markdown("**Matched**")
-        st.dataframe(_by_confidence(matched, query.name))
+        show_table(_by_confidence(matched, query.name), state.text_column)
         st.markdown("**Not matched**")
-        st.dataframe(_by_confidence(unmatched, query.name))
+        show_table(_by_confidence(unmatched, query.name), state.text_column)
         if not not_labelled.empty:
             st.markdown("**Not labelled**")
-            st.dataframe(not_labelled)
+            show_table(not_labelled, state.text_column)
 
 
 def _by_confidence(table: pd.DataFrame, name: str) -> pd.DataFrame:

@@ -3,7 +3,7 @@ import pytest
 
 from labeler.errors import ApiCallError, ApiKeyError
 from labeler.labeling_engine import estimate_cost, pick_test_rows, run_query
-from labeler.models import Note
+from labeler.models import LLMReply, Note
 from tests.fake_classifier import BLOCK, SKIP, FakeClassifier, contains_hit
 
 
@@ -115,3 +115,15 @@ def test_pick_test_rows_is_repeatable():
     assert pick_test_rows(1000) == pick_test_rows(1000)
     assert len(pick_test_rows(1000)) == 20
     assert pick_test_rows(5) == [0, 1, 2, 3, 4]
+
+
+def test_prose_reply_is_never_guessed(cache_path):
+    """A reply with no 'id|label' lines (e.g. an apology) leaves every row blank and noted."""
+    class ProseClassifier(FakeClassifier):
+        async def classify(self, system_prompt, user_prompt, max_output_tokens):
+            reply = await super().classify(system_prompt, user_prompt, max_output_tokens)
+            return LLMReply(content="Sorry, I can't help with that.", tokens=[], usage=reply.usage)
+
+    result = _run(["a hit", "b", "c"], ProseClassifier(), cache_path)
+    assert all(r.label is None and r.note == Note.REFUSED for r in result.labels)
+    assert result.stats.not_labelled == 3
