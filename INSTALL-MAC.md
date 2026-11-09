@@ -4,6 +4,8 @@ This guide takes you from nothing to a running app. You do it **once**, and it t
 
 You don't need to know anything about Python or programming. Every step tells you what to do, what to paste, and what you should see. If what you see doesn't match, go to [If something goes wrong](#if-something-goes-wrong) at the end.
 
+> **Already using the app?** You don't need to install it again. Go straight to [Getting a new version](#getting-a-new-version).
+
 ## Before you start
 
 You need:
@@ -132,6 +134,7 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
    cd ~/Documents/llm-csv-labeler
    .venv/bin/python -m streamlit run app.py
    ```
+   If your app is in another folder (for example `~/Code/llm-csv-labeler`), use that folder in the first line.
 3. The app opens in your browser.
 
 **To stop the app:** click the Terminal window and press **Ctrl+C**, or simply close the window.
@@ -140,20 +143,33 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 
 You don't need to install everything again. Your key, your saved results and the installed packages stay where they are.
 
+**What's new in this version**
+- The query list is now the main part of the page.
+- Upload, the text column and the box for a new query stay at the top. Your API key status and what the session has cost sit small in the top right; the gear icon next to them has **Clear cache**.
+- **Save queries**, **Load queries** and **Download CSV** are small buttons at the bottom of the window. Only the query cards scroll between the two.
+- Click the arrow next to a card's name to collapse it to one line.
+- The sidebar lists every answer in the chosen text column, so you can keep reading while you write queries.
+- Long answers wrap in every table. Double-click a cell to read the whole answer.
+- In the download, each query's new columns sit right after the text column.
+
+**How to update**
 1. Stop the app: click the Terminal window and press **Ctrl+C**.
-2. Put the new zip in your **Downloads** folder (don't unzip it yourself).
+2. Put the new zip in your **Downloads** folder (no need to unzip it).
 3. Paste these lines one at a time and press Enter after each:
    ```
    cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'
-   ditto ~/Downloads/llm-csv-labeler ~/Documents/llm-csv-labeler
+   cd ~/Code/llm-csv-labeler
+   ditto ~/Downloads/llm-csv-labeler .
    rm -rf ~/Downloads/llm-csv-labeler
-   cd ~/Documents/llm-csv-labeler
    uv pip install --python .venv -r requirements.txt
    .venv/bin/python -m streamlit run app.py
    ```
-   If your project folder is somewhere else (for example `~/Code/llm-csv-labeler`), use that path in lines 2 and 4. If Safari already unzipped the file (there's a `llm-csv-labeler` folder in Downloads), skip the first line. The `rm` line only removes the copy in Downloads.
+   - The second line goes to the folder where your app is. If you installed it in **Documents** (Step 1), use `cd ~/Documents/llm-csv-labeler` instead.
+   - The third line copies the new files over the old ones (the `.` means "this folder"). Your `.env` key, your saved results and the installed packages are kept.
+   - If Safari already unzipped the file (there's a `llm-csv-labeler` folder in Downloads), skip the first line.
+   - The `rm` line only removes the unzipped copy in Downloads.
 
-✅ **You should see:** the app opens as usual. The install line finishes in a few seconds and only lists packages that changed (or says everything is already installed).
+✅ **You should see:** the app opens as usual, with the new layout. The install line finishes in a few seconds and only lists packages that changed (or says everything is already installed).
 
 ---
 

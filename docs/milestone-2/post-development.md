@@ -150,7 +150,7 @@ Alex installs alone, with no screen share and no Mac on our side, and may have a
 ## Note: commit history
 On 2026-11-05 the history was rewritten (all branches and tags, force-pushed) to remove the `Co-Authored-By` trailer from 25 commit messages. Tariq is the only author. Code is unchanged: every branch and tag points to the same tree as before, and only the commit IDs changed. Other clones must re-clone.
 
-## Part I: Conda-proof setup and `$` display fix (on `dev`, not released yet)
+## Part I: Conda-proof setup and `$` display fix (released in `v1.0.2`)
 **Alex's first test failed** with `TypeError: process() takes no keyword arguments`.
 - **Cause:** his conda `(base)` was active, so `uv pip install` / `uv run` used conda's base environment instead of `.venv`. That environment has `brotli` 1.0.9. When brotli is importable, httpx2 (inside the OpenAI SDK) asks for brotli-compressed replies and decodes them with `process(data, output_buffer_limit=…)`, which brotli < 1.2 doesn't accept. In a clean `.venv` brotli isn't installed, so this never happens.
 - **Fixed for Alex by message** (no new zip): `uv pip install --python .venv -r requirements.txt` and `.venv/bin/python -m streamlit run app.py`.
@@ -161,7 +161,7 @@ On 2026-11-05 the history was rewritten (all branches and tags, force-pushed) to
 - **Tests:** 70 pass (new: environment check ×2, wrong-environment UI warning; the estimate test checks the escaping).
 - To be released as `v1.0.2` (`staging` → `main`, tag, zip) the next time Alex gets a new zip.
 
-## Part J: Alex's UI changes (on `feature/ui-rework`, not released yet)
+## Part J: Alex's UI changes (released in `v1.0.2`)
 Built from Alex's list (plan: `pre-development.md` Part J).
 
 | # | Item | How |
@@ -197,4 +197,6 @@ Built from Alex's list (plan: `pre-development.md` Part J).
   - UI: one-line box + placeholder, no headers, card collapse, download order, sidebar follows column, old Python stops
 - **Live regression in Edge (Playwright, `sample.csv`):** upload → add → Test (20 rows, $0.0002) → re-test from cache ($0.0000) → Run (46 of 220 matched, 8 empty, 1 trimmed) → Download CSV (column order checked) → Save queries → Load queries (loaded as `person_getting_hit_2`). Screenshots at 1600 / 1100 / 760 px: bars stay fixed while scrolling, nothing overlaps.
 
-**Done in 1 day (2026-11-09).** Walkthrough video recorded and sent by Tariq. Still to do: Tariq's review and merge into `dev`, then release v1.0.2 when Asad says.
+**Done in 1 day (2026-11-09).** Walkthrough video recorded and sent by Tariq (not re-recorded for round 2). Tariq tested it on 2026-11-10; scroll and narrow-window fixes followed (above).
+
+**Released as `v1.0.2` (2026-11-10):** `dev` → `staging` → `main`, tag pushed. Zip `output/llm-csv-labeler-v1.0.2.zip` (81 files): no internal docs, no `.env`/`cache.db`, no Asad/Upwork mentions. Clean install from the zip with `uv venv --python 3.12` + `uv pip install --python .venv -r requirements.txt`: 87 tests pass and the app starts. Not sent to Alex yet (waiting for Asad).
