@@ -20,6 +20,7 @@ Last updated: 2026-11-10
 | 2026-11-09 | Part 1 UI built on `feature/ui-rework` (Part J in `milestone-2/post-development.md`); 87 tests pass and a live browser check passed. Python minimum is 3.12 (Asad said 3.10; numpy needs 3.12), so tell Asad. |
 | 2026-11-10 | Tariq tested Part 1. Fixes from his test: scrolling (now a one-window layout where only the query area scrolls) and narrow windows (sidebar capped at 45%, top bar wraps). Merged into `dev` and pushed. Video: not re-recorded (round 2; the earlier one stands). |
 | 2026-11-10 | **Released `v1.0.2`** (`dev` → `staging` → `main`, tag pushed). Zip `output/llm-csv-labeler-v1.0.2.zip`: 81 files, no internal files, no Asad/Upwork mentions. Clean install with uv (Python 3.12.10): 87 tests pass and the app starts. Old v1.0.1 zip deleted. |
+| 2026-11-10 | `INSTALL-MAC.md`: "Already using the app?" pointer at the top, plus "What's new" and update steps that work from the app folder (shown with Alex's `~/Code/llm-csv-labeler`). README matched. **v1.0.2 rebuilt:** tag moved to the new `main` commit and force-pushed (nobody had the old zip). Only docs changed, so the clean-install check still holds. **Alex gets only the zip:** no separate message or guide; the update steps are in the guide inside it. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -35,7 +36,7 @@ Last updated: 2026-11-10
 
 ## Waiting on / next steps
 1. **Tariq's day-4 update to Asad:** Part 1 done, v1.0.2 zip, Python 3.12 (not 3.10, numpy needs it), hover not possible so double-click. Ask whether to send v1.0.2 to Alex, and when to plan Part 2.
-2. **After Asad agrees:** send Alex `llm-csv-labeler-v1.0.2.zip` and point him to "Getting a new version" in `INSTALL-MAC.md` (in-place update; his `.venv`, `.env` and `cache.db` stay).
+2. **After Asad agrees:** send Alex `llm-csv-labeler-v1.0.2.zip` only. The guide inside it starts with "Already using the app?" and links to "Getting a new version" (what's new and in-place update steps; his `.venv`, `.env` and `cache.db` stay).
 3. **Alex confirms:** the app runs (conda fix), the update steps work (`ditto`, macOS-only, untested here), and the CSV opens in Excel. If it fails, ask for the full error and `.venv/bin/python --version`.
 4. **Part 2** (Claude option, row filter per query, a workspace per column, keyword queries): only after Asad plans it. Hosting is quoted separately.
 5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
