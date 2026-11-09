@@ -160,3 +160,41 @@ On 2026-11-05 the history was rewritten (all branches and tags, force-pushed) to
 - **`$` display bug** (seen in Alex's screenshot): Streamlit read the text between the two `$` signs in the card's estimate line as a maths formula. All `$` in card text are now escaped (`\$`).
 - **Tests:** 70 pass (new: environment check ×2, wrong-environment UI warning; the estimate test checks the escaping).
 - To be released as `v1.0.2` (`staging` → `main`, tag, zip) the next time Alex gets a new zip.
+
+## Part J: Alex's UI changes (on `feature/ui-rework`, not released yet)
+Built from Alex's list (plan: `pre-development.md` Part J).
+
+| # | Item | How |
+|---|---|---|
+| 1 | Long responses | `ui/answer_table.py` is used by every answers table. Rows are 80 px, and Streamlit wraps text when rows are taller than 4rem (checked in the frontend code), so about 3 lines show. **Double-click a cell** (or click it twice) for the full text in an overlay. Hover isn't possible: `st.dataframe` has no per-cell tooltip. |
+| 2 | Collapsible cards | Arrow button in the card header; collapsed shows name + status. State in `st.session_state["collapsed_<id>"]`. |
+| 3 | Save / download | Bottom bar (`key="bottom_bar"`): small **Save queries**, **Load queries** (popover with the uploader), **Download CSV**. Load messages are toasts. |
+| 4 | Top bar + preview | Top bar (`key="top_bar"`): compact uploader + text column, key status + spend + Settings popover (model, Clear cache) at the right, then the add form. Warnings (no key, wrong env) show full-width under the bar. **Data preview** expander, collapsed. |
+| 5 | Query input | `st.text_input` with the hint as its placeholder; Enter suggests the column name. |
+| 6 | Headers | All `st.title`/`st.header` removed. |
+| 7 | Column order | `add_result_columns(..., after=)` uses `df.insert`. The download puts each query's 3 columns after the text column, then after the previous query's note column. Checked live: `…, transportation_open, person_getting_hit, _conf, _note, housing_open, …`. |
+| 8 | Sidebar list | `ui/reading_list_sidebar.py`: 480 px sidebar (`initial_sidebar_state=480`, drag to resize), the non-empty answers of the chosen column with row numbers, wrapped, 650 px high, scrolls inside. |
+
+**Fixed bars, how:**
+- **First try: `position: sticky`** on the bars. Tariq's test showed it was unreliable: bars drifted, cards overlapped them, and stale elements showed through during reruns.
+- **Final: one-window layout.** `stMainBlockContainer` is `height: 100vh` and a flex column. The top bar and bottom bar keep their height, and the wrapper of `st.container(key="query_area")` (warnings, data preview, cards) takes the rest with `overflow-y: auto`. The page itself never scrolls; only the query area does. Checked in Edge: bar positions stay identical while scrolling, the last card is reachable, and it holds at 1600×900, 1100×800 and 760×700.
+- **Gotcha:** Streamlit's HTML sanitizer drops a `<style>` block whose text contains `<` followed by a letter (a CSS comment with `<key>` silently disabled everything). The CSS file says so, and `tests/test_page_style.py` guards it.
+- No theme pin is needed (the bars have no background colour), so the app follows the system light/dark theme as before.
+- **Narrow windows** (Tariq's test: sidebar dragged wide on a ~1000 px window squeezed the top bar to a few letters per line):
+  - The sidebar is capped at 45% of the window.
+  - Top-bar columns have a minimum width and wrap onto a new line.
+  - The query area keeps at least 14rem.
+  - Session info is compact (key status, spend, gear menu).
+  - Bottom-bar buttons are smaller.
+  - Checked at 1000 px with a wide sidebar, and at 800, 1366 and 1920 px.
+
+**Milestone 2 rest:**
+- **Python check:** `labeler/python_version_check.py` (no 3.10+ syntax) runs first in `app.py`. Below `config.MIN_PYTHON` (3.12) the app shows a clear error with the start command and stops. Minimum is 3.12 (not 3.10 as asked) because numpy 2.5 needs it.
+- **README:** "How to use" rewritten for the layout, new **Updating to a new version** section, troubleshooting rows for `(base)` and the Python message.
+- **INSTALL-MAC:** "Getting a new version" now updates in place without reinstalling (`unzip -o '…v*.zip'` + `ditto` over the old folder; `.venv`, `.env` and `cache.db` stay; `uv pip install` only fetches changed packages). Also sidebar wording fixed. Tested: quoted `unzip` wildcard with 2 zips → the newer one wins. `ditto` is macOS-only, so it isn't tested here.
+- **Tests: 87 pass** (was 70):
+  - new: version check ×3, column order ×2, non-empty answers, prose reply never guessed, duplicate headers survive, BOM-only file rejected, CSS guard ×2
+  - UI: one-line box + placeholder, no headers, card collapse, download order, sidebar follows column, old Python stops
+- **Live regression in Edge (Playwright, `sample.csv`):** upload → add → Test (20 rows, $0.0002) → re-test from cache ($0.0000) → Run (46 of 220 matched, 8 empty, 1 trimmed) → Download CSV (column order checked) → Save queries → Load queries (loaded as `person_getting_hit_2`). Screenshots at 1600 / 1100 / 760 px: bars stay fixed while scrolling, nothing overlaps.
+
+**Done in 1 day (2026-11-09).** Walkthrough video recorded and sent by Tariq. Still to do: Tariq's review and merge into `dev`, then release v1.0.2 when Asad says.

@@ -17,18 +17,34 @@ cp .env.example .env && open -e .env                  # paste your key after OPE
 ```
 Next time, you only need the `cd` line and `.venv/bin/python -m streamlit run app.py`. These commands always use the project's own `.venv`, so an active conda `(base)` can't interfere.
 
+## Updating to a new version
+Your `.venv`, `.env` key and `cache.db` (saved results) stay in place. Only the app files are replaced, and only changed packages are downloaded. Stop the app first (Ctrl+C), then, with the new zip in Downloads:
+```bash
+cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'                  # makes ~/Downloads/llm-csv-labeler
+ditto ~/Downloads/llm-csv-labeler ~/Documents/llm-csv-labeler       # copies the new files over the old ones
+rm -rf ~/Downloads/llm-csv-labeler                                  # tidy up, ready for next time
+cd ~/Documents/llm-csv-labeler
+uv pip install --python .venv -r requirements.txt                   # only changed packages
+.venv/bin/python -m streamlit run app.py
+```
+If your project folder is somewhere else (e.g. `~/Code/llm-csv-labeler`), use that path instead of `~/Documents/llm-csv-labeler`.
+
 ## How to use
 
-1. **Upload a CSV.** You'll see the row count, the columns and the first 10 rows.
-2. **Choose the text column.** The column with the longest text is picked automatically, and you can change it. If many rows in that column are empty, a warning names a better column.
-3. **Add a query.** Write it as a full sentence, for example *"Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"*. A short column name is suggested, and you can edit it. Each query becomes a **card**.
+The top bar stays in view: the file and text column on the left, the API key status and session spend on the right, and the box for a new query below them. The query cards fill the page. **Save queries**, **Load queries** and **Download CSV** stay at the bottom of the window.
+
+1. **Upload a CSV** in the top bar. **Data preview** (closed by default) shows the row count, the columns and the first 10 rows.
+2. **Choose the text column** next to the file. The column with the longest text is picked automatically. If many rows in that column are empty, a warning names a better column. The **sidebar** lists every non-empty answer in that column, so you can read them while you write queries. Drag the sidebar's edge to make it wider or narrower.
+3. **Add a query.** Write it as a full sentence in the box at the top, for example *"Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"*, and press Enter. A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
 4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost. If the results look wrong, click **Edit**, reword the query and test again.
 5. **Run** labels every row. A progress bar shows the batches. The card then shows "X of Y matched, Z not labelled".
-6. **Add more queries** as needed. Each one gets its own card and its own columns.
-7. **Download** the original CSV with the columns of every finished query added.
-8. **Save the queries** (`.json`) to reuse them on a new CSV. Loaded queries never run by themselves.
+6. **Add more queries** as needed. Each one gets its own card and its own columns. Click the arrow next to a card's name to collapse it to one line.
+7. **Download CSV** gives the original file with 3 columns per finished query, placed right after the text column.
+8. **Save queries** (`.json`) to reuse them on a new CSV, and **Load queries** to bring them back. Loaded queries never run by themselves.
 
-Each card shows the estimated cost of a test and of a full run before you click. The sidebar shows the total spend for this session.
+**Long answers:** in every table, long answers wrap over a few lines. Double-click a cell to read the whole answer.
+
+Each card shows the estimated cost of a test and of a full run before you click.
 
 ### Output columns (per query, e.g. `kids`)
 | Column | Values | Meaning |
@@ -66,7 +82,7 @@ About **13 seconds and $0.009 per 1,000 short answers**. Re-running an unchanged
 
 The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Changing them automatically makes old cached results unused.
 
-**After changing settings, restart the app and click "Clear cache" in the sidebar.**
+**After changing settings, restart the app and click "Clear cache" (gear icon, top right).**
 
 ## Troubleshooting
 | Problem | Fix |
@@ -76,8 +92,10 @@ The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Cha
 | Rows marked `failed` / rate-limit errors | Lower `MAX_CONCURRENT` in `config.py`, then Run again. Only failed rows are re-sent |
 | Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in [INSTALL-MAC.md](INSTALL-MAC.md#if-something-goes-wrong) |
 | An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `.venv/bin/python -m streamlit run app.py` again. A browser refresh isn't enough |
+| "This app needs Python 3.12 or newer" | The app was started with an older Python (for example conda's, or the Mac's own). Start it with `.venv/bin/python -m streamlit run app.py`. If `.venv` is missing, run the Setup commands again |
 | Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install --python .venv -r requirements.txt` again |
-| Sidebar warns "not running from its own environment", or `process() takes no keyword arguments` | The app was started with another Python (e.g. conda's base), which has different package versions. Start it with `.venv/bin/python -m streamlit run app.py`. If the error stays, delete `.venv` and repeat the install |
+| Terminal shows `(base)` (conda is active) | That's fine if you use the commands above exactly: they always use the project's own `.venv`. Don't type `pip install`, `uv run` or `streamlit run` on their own, because with conda active they use conda's Python and its old packages. To switch conda off for the current window, run `conda deactivate` |
+| A warning says "not running from its own environment", or `process() takes no keyword arguments` | The app was started with another Python (e.g. conda's base), which has different package versions. Start it with `.venv/bin/python -m streamlit run app.py`. If the error stays, delete `.venv` and repeat the install |
 | CSV won't load | Save it as "CSV UTF-8" from Excel. The file needs a header row and at least one data row |
 | Many rows "empty" | Those rows have no text in the chosen column. Pick the column named in the warning |
 | Strange characters in Excel | The download is UTF-8 with BOM, so open it with a double-click rather than importing it as plain text |

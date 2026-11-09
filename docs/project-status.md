@@ -16,6 +16,8 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 | 2026-11-06 | Alex installed it but his first **Test** failed: `TypeError: process() takes no keyword arguments`. Second issue in his screenshot: the estimate line rendered garbled (`$` read as a maths formula). |
 | 2026-11-06 | Sent the fix by message (no new zip): rebuild `.venv` and use the conda-proof commands below. |
 | 2026-11-06 | On `dev` (not released): conda-proof guide/README, sidebar wrong-environment warning, `$` fix (Part I in `milestone-2/post-development.md`). |
+| 2026-11-09 | Alex sent a list of changes; Asad split it into Part 1 (in contract: 8 UI items + rest of Milestone 2) and Part 2 (add-ons, **not started**: Claude option, row filter per query, a workspace per column, keyword queries; hosting quoted separately). Estimate for Part 1: 1 day. Asad wants a short update with screenshots at the end of each day. |
+| 2026-11-09 | Part 1 UI built on `feature/ui-rework` (Part J in `milestone-2/post-development.md`); 87 tests pass and a live browser check passed. Python minimum is 3.12 (Asad said 3.10; numpy needs 3.12), so tell Asad. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -30,6 +32,7 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
+0. **Part 1 (Alex's UI list):** Tariq reviews and merges `feature/ui-rework` → `dev`, Walkthrough video already recorded and sent. Release `v1.0.2` when Asad says. Don't start Part 2.
 1. **Alex confirms the app runs** with the commands above. If it still fails, ask for the full traceback and the output of `.venv/bin/python --version` and `.venv/bin/python -m pip list`.
 2. **Release `v1.0.2`** (everything in Part I) the next time Alex needs a new zip. **Don't send a zip just for this:** his setup works with the message fix.
 3. **Optional, only if Alex asks:**
