@@ -32,7 +32,7 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-0. **Part 1 (Alex's UI list): done.** Tariq tested it; `feature/ui-rework` merged into `dev` on 2026-11-09 (not pushed yet). Walkthrough video already recorded and sent. Next: Tariq sends Asad one update at the end of day 4. Release `v1.0.2` when Asad says. Don't start Part 2.
+0. **Part 1 (Alex's UI list): done.** Tariq tested it; `feature/ui-rework` merged into `dev` and pushed on 2026-11-09. Walkthrough video already recorded and sent. Next: Tariq sends Asad one update at the end of day 4. Release `v1.0.2` when Asad says. Don't start Part 2.
 1. **Alex confirms the app runs** with the commands above. If it still fails, ask for the full traceback and the output of `.venv/bin/python --version` and `.venv/bin/python -m pip list`.
 2. **Release `v1.0.2`** (everything in Part I) the next time Alex needs a new zip. **Don't send a zip just for this:** his setup works with the message fix.
 3. **Optional, only if Alex asks:**
