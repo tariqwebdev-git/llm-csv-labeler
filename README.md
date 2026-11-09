@@ -20,14 +20,14 @@ Next time, you only need the `cd` line and `.venv/bin/python -m streamlit run ap
 ## Updating to a new version
 Your `.venv`, `.env` key and `cache.db` (saved results) stay in place. Only the app files are replaced, and only changed packages are downloaded. Stop the app first (Ctrl+C), then, with the new zip in Downloads:
 ```bash
-cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'                  # makes ~/Downloads/llm-csv-labeler
-ditto ~/Downloads/llm-csv-labeler ~/Documents/llm-csv-labeler       # copies the new files over the old ones
-rm -rf ~/Downloads/llm-csv-labeler                                  # tidy up, ready for next time
-cd ~/Documents/llm-csv-labeler
-uv pip install --python .venv -r requirements.txt                   # only changed packages
+cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'      # makes ~/Downloads/llm-csv-labeler
+cd ~/Code/llm-csv-labeler                               # your app folder (e.g. ~/Documents/llm-csv-labeler)
+ditto ~/Downloads/llm-csv-labeler .                     # copies the new files over the old ones
+rm -rf ~/Downloads/llm-csv-labeler                      # tidy up, ready for next time
+uv pip install --python .venv -r requirements.txt       # only changed packages
 .venv/bin/python -m streamlit run app.py
 ```
-If your project folder is somewhere else (e.g. `~/Code/llm-csv-labeler`), use that path instead of `~/Documents/llm-csv-labeler`.
+Step-by-step version, with what's new: [INSTALL-MAC.md](INSTALL-MAC.md#getting-a-new-version).
 
 ## How to use
 
