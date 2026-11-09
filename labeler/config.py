@@ -31,8 +31,17 @@ EMPTY_WARNING_SHARE = 0.20 # strong warning if more than this share of rows is e
 QUERY_MIN_WORDS = 3        # warn when a query is shorter (short queries are often misread)
 
 # --- Interface ---------------------------------------------------------------
-PREVIEW_ROWS = 10          # rows shown after upload
+PREVIEW_ROWS = 10          # rows shown in the "Data preview" section
 RESULT_PREVIEW_ROWS = 50   # rows shown in the result preview (lowest confidence first)
+SIDEBAR_WIDTH_PX = 480     # starting sidebar width (200-600); drag its edge to resize
+TABLE_ROW_HEIGHT_PX = 80   # taller rows wrap long answers (about 3 lines); click a cell for all of it
+TABLE_TEXT_WIDTH_PX = 480  # starting width of the answer column in the main tables
+READING_LIST_TEXT_WIDTH_PX = 220  # same in the sidebar list (stretches to the sidebar's width)
+READING_LIST_MAX_ROWS = 5000  # most answers listed in the sidebar
+READING_LIST_HEIGHT_PX = 650  # height of the sidebar list; it scrolls inside
+
+# --- Python ------------------------------------------------------------------
+MIN_PYTHON = (3, 12)       # the pinned packages (numpy 2.5) need Python 3.12 or newer
 
 # --- Test runs ---------------------------------------------------------------
 TEST_SIZE = 20             # rows in a test run

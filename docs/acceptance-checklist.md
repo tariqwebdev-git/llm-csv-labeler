@@ -18,7 +18,7 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 | Estimated cost before every run; actual cost after | ✅ | `test_card_shows_test_and_full_estimates`; result box shows actual cost |
 | Re-running an unchanged query uses the cache and costs $0.00 | ✅ | `test_duplicates_sent_once_and_rerun_uses_cache`; live: 220 rows, $0.00 |
 | Queries save to JSON and load on a different CSV | ✅ | `test_round_trip_loads_as_not_run`, `test_load_queries_json_adds_not_run_cards` |
-| Download has the same rows, order and original columns, plus new columns | ✅ | `test_full_run_counts_box_and_download`, `test_adds_three_columns_without_changing_original` |
+| Download has the same rows, order and original columns, plus new columns | ✅ | `test_full_run_counts_box_and_download`, `test_adds_three_columns_without_changing_original`; new columns sit right after the text column (`test_download_puts_new_columns_after_text_column`, live check 2026-11-09) |
 | Downloaded CSV opens correctly in Excel | ✅ | UTF-8 with BOM (`test_output_has_bom_for_excel`); ⏳ confirm on Alex's Mac |
 
 ## Accuracy
@@ -50,10 +50,24 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 | Alex installs and runs the app from the README on his machine | ⏳ | `INSTALL-MAC.md`: step-by-step guide for a non-technical user (uv installs Python 3.12 and the pinned packages), with an "If something goes wrong" table. The same uv commands were tested on a clean copy (Windows): install, 67 tests pass, and the app starts. Needs Alex |
 | Alex can change the model, batch size and test size in `config.py` | ✅ | Settings table in the README; every setting is commented in `config.py` |
 
+## Alex's UI changes (2026-11-09, `feature/ui-rework`)
+| Item | Status | Evidence |
+|---|---|---|
+| Long answers readable everywhere (wrap + click for full text) | ✅ | `ui/answer_table.py` in the sidebar, preview, test and results tables; browser check |
+| Whole card collapses to its name | ✅ | `test_card_collapses_to_its_name`; browser check |
+| Save / Load / Download small and fixed at the bottom | ✅ | Browser check at 1600 / 1100 / 760 px while scrolling |
+| Upload, session info and Create Query fixed at the top; preview collapsed | ✅ | `test_upload_shows_preview_and_picks_text_column`; browser check |
+| Single-line query box, hint as placeholder | ✅ | `test_query_box_is_one_line_with_hint_as_placeholder` |
+| No big headers | ✅ | `test_no_big_headers` |
+| Sidebar lists non-empty answers of the chosen column | ✅ | `test_sidebar_lists_answers_of_chosen_column` |
+| App stops with a clear message on old Python | ✅ | `test_old_python_stops_with_message`, `tests/test_python_version_check.py` |
+| Update to a new version without reinstalling | ✅ | README + INSTALL-MAC; ⏳ confirm on Alex's Mac (`ditto` is macOS-only) |
+| Walkthrough video (≤ 5 min) | ✅ | Recorded and sent by Tariq (2026-11-09) |
+
 ## Model lifetime
 Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previous default `gpt-4o-mini` shuts down 2027-01-14. To change model: `config.py` (`MODEL`, `REASONING_EFFORT`, the 3 prices), then `python scripts/run_eval.py --model <name>`.
 
 ## Open items for Alex
-1. Send the real CSV and 2–3 queries with 20 hand-labelled rows each, and choose the accuracy target X.
-2. Install with `INSTALL-MAC.md`, then delete the "highlighter-dev" key and use his own.
+1. Optional: 20 hand-labelled rows per query and an accuracy target X. We do not ask him for these unless needed.
+2. Installed (2026-11-06); first run hit the conda issue, fix sent by message, waiting for his confirmation. He then deletes the "highlighter-dev" key.
 3. Decide on v2 ideas: an "invert" option for "does not" queries, labelling several columns combined, a hosted version.

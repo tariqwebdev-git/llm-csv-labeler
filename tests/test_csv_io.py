@@ -39,3 +39,15 @@ def test_blank_header_survives_upload_and_download():
     out = add_result_columns(df, "q", [RowLabel(1, 0.9)])
     header = to_csv_bytes(out).decode("utf-8-sig").splitlines()[0]
     assert header == ',answer,q,q_conf,q_note'
+
+
+def test_duplicate_headers_kept_on_download():
+    df = read_csv(b"answer,answer\nfirst,second\n")
+    assert len(df.columns) == 2
+    header = to_csv_bytes(df).decode("utf-8-sig").splitlines()[0]
+    assert header == "answer,answer"
+
+
+def test_bom_only_file_rejected():
+    with pytest.raises(CsvReadError):
+        read_csv(b"\xef\xbb\xbf")

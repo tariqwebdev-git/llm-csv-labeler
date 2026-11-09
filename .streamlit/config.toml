@@ -1,0 +1,4 @@
+# Less empty space above the top bar and below the bottom bar (see ui/page_style.css).
+[theme]
+paddingTop = "0.5rem"
+paddingBottom = "0rem"
