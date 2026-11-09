@@ -54,6 +54,6 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previous default `gpt-4o-mini` shuts down 2027-01-14. To change model: `config.py` (`MODEL`, `REASONING_EFFORT`, the 3 prices), then `python scripts/run_eval.py --model <name>`.
 
 ## Open items for Alex
-1. Send the real CSV and 2–3 queries with 20 hand-labelled rows each, and choose the accuracy target X.
-2. Install with `INSTALL-MAC.md`, then delete the "highlighter-dev" key and use his own.
+1. Optional: 20 hand-labelled rows per query and an accuracy target X. We do not ask him for these unless needed.
+2. Installed (2026-11-06); first run hit the conda issue, fix sent by message, waiting for his confirmation. He then deletes the "highlighter-dev" key.
 3. Decide on v2 ideas: an "invert" option for "does not" queries, labelling several columns combined, a hosted version.

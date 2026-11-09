@@ -4,7 +4,7 @@
 A local Streamlit app for Alex Loewi (Upwork client). He uploads a CSV, picks a text column and writes plain-English yes/no queries. Each query adds `<name>` (1/0/blank), `<name>_conf` (0.50–1.00) and `<name>_note` (empty, trimmed, refused, blocked, failed) columns. Labels come from OpenAI in batches, and confidence comes from token logprobs.
 
 - Developer: Tariq Saleem. Senior: Asad. Plan: `LLM CSV Labeler Development Plan Final.pdf` (Nov 4, 2026).
-- Alex is on macOS Tahoe, so the README has macOS steps only.
+- Alex is on macOS Tahoe with conda always active; his install guide is `INSTALL-MAC.md` (macOS steps only).
 - Main test case: the query "Mentions a person getting hit by a car or other vehicle" on the `transportation_open` column. **Near misses ("a car almost hit my son") count as 1.**
 
 ## Commands
@@ -53,4 +53,4 @@ python scripts/run_eval.py [--model gpt-4o-mini]                             # a
 `app.py` (layout only) + `ui/`: `ui_models.py` (AppState, QueryRun types), `session.py` (get_state), `query_actions.py` (state rules: add/edit/delete/record, no drawing), `result_tables.py` (preview order, test split), `sidebar.py` (key status, spend, Clear cache), `upload_section.py`, `query_list_section.py` (add form + cards), `query_card.py` (one card: Edit/Test/Run/Delete), `query_file_section.py` (save/load JSON), `download_section.py`. UI tests: `tests/test_app_ui.py` (AppTest + fake model).
 
 ## Status
-See the latest `docs/milestone-*/post-development.md` and `docs/acceptance-checklist.md` (✅ done, ⏳ needs Alex).
+**Read `docs/project-status.md` at the start of every session** (handover log, what Alex has, what we are waiting on, how to release a zip). Update it when anything is sent to Alex or decided. Build history: `docs/milestone-*/post-development.md`; acceptance: `docs/acceptance-checklist.md` (✅ done, ⏳ needs Alex).
