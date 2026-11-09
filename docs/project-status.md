@@ -31,12 +31,13 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 
 ## Waiting on / next steps
 1. **Alex confirms the app runs** with the commands above. If it still fails, ask for the full traceback and the output of `.venv/bin/python --version` and `.venv/bin/python -m pip list`.
-2. **Push `dev`:** local `dev` is ahead of GitHub because pushes from this PC were refused (403). Windows Credential Manager is signed in as GitHub user `aasimdev`, which has no write access to `tariqwebdev-git/llm-csv-labeler`. Fix: remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`, then `git push origin dev` and the feature branches.
-3. **Release `v1.0.2`** (everything in Part I) the next time Alex needs a new zip. **Don't send a zip just for this:** his setup works with the message fix.
-4. **Optional, only if Alex asks:**
+2. **Release `v1.0.2`** (everything in Part I) the next time Alex needs a new zip. **Don't send a zip just for this:** his setup works with the message fix.
+3. **Optional, only if Alex asks:**
    - a hosted version (see Decisions)
    - his 20 hand-labelled rows per query (we don't ask him for these)
    - v2 ideas: "invert" for "does not" queries, several columns combined
+
+**If a push is refused (403):** Windows Credential Manager may hold a different GitHub account (it once held `aasimdev`). Remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`.
 
 ## How to release a zip
 1. Merge the feature branch into `dev`, run `pytest`, then `dev` → `staging` → `main` (`--no-ff`). Then `git tag -a vX.Y.Z` on `main`, and push the branches and the tag.
