@@ -2,10 +2,10 @@
 
 **Read this first in every new session.** Update it whenever something is sent to Alex, he replies, or a decision is made. This file is internal: `export-ignore` keeps it out of Alex's zip.
 
-Last updated: 2026-11-09
+Last updated: 2026-11-10
 
 ## Where we are
-The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting for Alex to confirm the app runs after the conda fix.**
+**`v1.0.2` is released** (on `main`, zip built and checked), but **not yet sent to Alex**: wait for Asad's go-ahead (Tariq's day-4 update). Still waiting for Alex to confirm the app runs after the conda fix.
 
 | Date | What happened |
 |---|---|
@@ -18,6 +18,8 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 | 2026-11-06 | On `dev` (not released): conda-proof guide/README, sidebar wrong-environment warning, `$` fix (Part I in `milestone-2/post-development.md`). |
 | 2026-11-09 | Alex sent a list of changes; Asad split it into Part 1 (in contract: 8 UI items + rest of Milestone 2) and Part 2 (add-ons, **not started**: Claude option, row filter per query, a workspace per column, keyword queries; hosting quoted separately). Estimate for Part 1: 1 day. Asad wants a short update with screenshots at the end of each day. |
 | 2026-11-09 | Part 1 UI built on `feature/ui-rework` (Part J in `milestone-2/post-development.md`); 87 tests pass and a live browser check passed. Python minimum is 3.12 (Asad said 3.10; numpy needs 3.12), so tell Asad. |
+| 2026-11-10 | Tariq tested Part 1. Fixes from his test: scrolling (now a one-window layout where only the query area scrolls) and narrow windows (sidebar capped at 45%, top bar wraps). Merged into `dev` and pushed. Video: not re-recorded (round 2; the earlier one stands). |
+| 2026-11-10 | **Released `v1.0.2`** (`dev` → `staging` → `main`, tag pushed). Zip `output/llm-csv-labeler-v1.0.2.zip`: 81 files, no internal files, no Asad/Upwork mentions. Clean install with uv (Python 3.12.10): 87 tests pass and the app starts. Old v1.0.1 zip deleted. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -32,13 +34,11 @@ The app is built, released (`v1.0.1` on `main`) and delivered. **We're waiting f
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-0. **Part 1 (Alex's UI list): done.** Tariq tested it; `feature/ui-rework` merged into `dev` and pushed on 2026-11-09. Walkthrough video already recorded and sent. Next: Tariq sends Asad one update at the end of day 4. Release `v1.0.2` when Asad says. Don't start Part 2.
-1. **Alex confirms the app runs** with the commands above. If it still fails, ask for the full traceback and the output of `.venv/bin/python --version` and `.venv/bin/python -m pip list`.
-2. **Release `v1.0.2`** (everything in Part I) the next time Alex needs a new zip. **Don't send a zip just for this:** his setup works with the message fix.
-3. **Optional, only if Alex asks:**
-   - a hosted version (see Decisions)
-   - his 20 hand-labelled rows per query (we don't ask him for these)
-   - v2 ideas: "invert" for "does not" queries, several columns combined
+1. **Tariq's day-4 update to Asad:** Part 1 done, v1.0.2 zip, Python 3.12 (not 3.10, numpy needs it), hover not possible so double-click. Ask whether to send v1.0.2 to Alex, and when to plan Part 2.
+2. **After Asad agrees:** send Alex `llm-csv-labeler-v1.0.2.zip` and point him to "Getting a new version" in `INSTALL-MAC.md` (in-place update; his `.venv`, `.env` and `cache.db` stay).
+3. **Alex confirms:** the app runs (conda fix), the update steps work (`ditto`, macOS-only, untested here), and the CSV opens in Excel. If it fails, ask for the full error and `.venv/bin/python --version`.
+4. **Part 2** (Claude option, row filter per query, a workspace per column, keyword queries): only after Asad plans it. Hosting is quoted separately.
+5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
 
 **If a push is refused (403):** Windows Credential Manager may hold a different GitHub account (it once held `aasimdev`). Remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`.
 
