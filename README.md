@@ -34,17 +34,28 @@ Step-by-step version, with what's new: [INSTALL-MAC.md](INSTALL-MAC.md#getting-a
 The top bar stays in view: the file and text column on the left, the API key status and session spend on the right, and the box for a new query below them. The query cards fill the page. **Save queries**, **Load queries** and **Download CSV** stay at the bottom of the window.
 
 1. **Upload a CSV** in the top bar. **Data preview** (closed by default) shows the row count, the columns and the first 10 rows.
-2. **Choose the text column** next to the file. The column with the longest text is picked automatically. If many rows in that column are empty, a warning names a better column. The **sidebar** lists every non-empty answer in that column, so you can read them while you write queries. Drag the sidebar's edge to make it wider or narrower.
-3. **Add a query.** Write it as a full sentence in the box at the top, for example *"Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"*, and press Enter. A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
+2. **Choose the text column** next to the file. The column with the longest text is picked automatically. If many rows in that column are empty, a warning names a better column. The **sidebar** lists every non-empty answer in that column, so you can read them while you write queries. Drag the sidebar's edge to make it wider or narrower. **Each text column keeps its own queries and results:** switch columns and back, and nothing is lost. The column picker shows how many queries each column has.
+3. **Add a query.** There are two kinds, each with its own tab at the top:
+   - **New LLM Query:** write a full sentence, for example *"Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"*, and press Enter. The AI reads every row and answers yes or no.
+   - **New Keyword Query:** type words separated by commas, for example *car, truck, bus, hit by*. A row matches if it contains any of them; upper/lower case is ignored. With **Whole words only** (on by default), "car" does not match "scar". Keyword queries are free and instant and need no API key; their confidence is always 1.00.
+
+   A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
 4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost. If the results look wrong, click **Edit**, reword the query and test again.
 5. **Run** labels every row. A progress bar shows the batches. The card then shows "X of Y matched, Z not labelled".
 6. **Add more queries** as needed. Each one gets its own card and its own columns. Click the arrow next to a card's name to collapse it to one line.
-7. **Download CSV** gives the original file with 3 columns per finished query, placed right after the text column.
-8. **Save queries** (`.json`) to reuse them on a new CSV, and **Load queries** to bring them back. Loaded queries never run by themselves.
+7. **See a query's rows in the sidebar:** click the sidebar icon on the right of a card (after a Test or Run). The sidebar then lists that query's rows with its label and confidence, matched rows in green, and a filter: All, Matched, Not matched, Not labelled. Click × to go back to all answers.
+8. **Download CSV** gives the original file with 3 columns per finished query. Each query's columns sit right after the text column it was run on, including queries on other columns.
+9. **Save queries** (`.json`) saves the queries of the current column, to reuse them on a new CSV; **Load queries** brings them back into the current column. Loaded queries never run by themselves.
 
 **Long answers:** in every table, long answers wrap over a few lines. Double-click a cell to read the whole answer.
 
 Each card shows the estimated cost of a test and of a full run before you click.
+
+### Using Claude instead of OpenAI (optional)
+1. Add a line with your Claude key to `.env`: `ANTHROPIC_API_KEY=sk-ant-...` (open it with `open -e .env`), then restart the app.
+2. Click the **gear icon** (top right) and choose **Claude**. The key status shows which AI is in use.
+
+Claude labels the rows the same way, but **without a confidence score for now** (the `_conf` column stays blank): Claude doesn't give the probabilities the score is built from. Each AI keeps its own saved results, so switching back and forth never mixes them. Keyword queries don't use either AI.
 
 ### Output columns (per query, e.g. `kids`)
 | Column | Values | Meaning |
@@ -73,6 +84,8 @@ About **13 seconds and $0.009 per 1,000 short answers**. Re-running an unchanged
 ## Settings (`labeler/config.py`)
 | Setting | Default | Change it when |
 |---|---|---|
+| `PROVIDER` / `ANTHROPIC_MODEL` | `"openai"` / `claude-haiku-5-5` | You want the app to start with Claude (`"anthropic"`), or Anthropic retires the model (update the 3 `ANTHROPIC_PRICE_*` values too). The gear icon switches provider while the app runs |
+| `KEYWORD_WHOLE_WORDS_DEFAULT` | `True` | You want new keyword queries to match inside longer words by default |
 | `MODEL` / `REASONING_EFFORT` | `gpt-6-luna` / `"none"` | OpenAI retires a model. Pick a current one from OpenAI's deprecations page and update the 3 `PRICE_*` values. Older chat models (e.g. `gpt-4o-mini`) need `REASONING_EFFORT = None`; newer reasoning models need `"none"` (otherwise there's no confidence score). Run `python scripts/run_eval.py --model <name>` to compare accuracy first |
 | `BATCH_SIZE` | 10 | Keep it at 20 or less. Bigger batches make answers drift between rows |
 | `MAX_BATCH_ITEM_TOKENS` | 1000 | Long texts are batched by length so they stay accurate |
