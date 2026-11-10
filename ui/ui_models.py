@@ -37,5 +37,6 @@ class AppState:
     full_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> run
     test_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> test
     workspaces: dict[str, ColumnWorkspace] = field(default_factory=dict)   # other columns
+    sidebar_query_id: str | None = None   # query whose rows the sidebar shows (None = all answers)
     session_spend_usd: float = 0.0
     cache_version: int = 0                # bumped when cached results change
