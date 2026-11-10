@@ -216,3 +216,40 @@ def test_switching_column_keeps_each_columns_queries(make_app):
     assert state.queries[0].status == QueryStatus.DONE               # result kept
     columns = list(labeled_table(state).columns)
     assert columns.index("person_hit_vehicle") == columns.index("transportation_open") + 1
+
+
+def _add_keyword(at: AppTest, words: str, whole_words: bool = True) -> AppTest:
+    at.text_input(key="new_keyword_text").input(words).run()
+    if not whole_words:
+        at.checkbox(key="new_keyword_whole_words").uncheck().run()
+    return at.button(key="add_keyword_query").click().run()
+
+
+def test_keyword_query_runs_without_api_key_and_is_free(make_app):
+    import re
+    import pandas as pd
+    at = _add_keyword(_upload(make_app(api_key=None)), "car, truck, bus")
+    query = _state(at).queries[0]
+    assert query.name == "car_truck_bus" and query.kind.value == "keyword"
+    assert not at.button(key=f"run_{query.id}").disabled
+    at = _click(at, "run")
+    state = _state(at)
+    labels = [r.label for r in state.full_runs[query.id].result.labels]
+    texts = pd.read_csv(ROOT / "sample_data" / "sample.csv", dtype=str, keep_default_na=False)["transportation_open"]
+    pattern = re.compile(r"(?<!\w)(?:truck|car|bus)(?!\w)", re.IGNORECASE)
+    expected = [None if not t.strip() else int(bool(pattern.search(t))) for t in texts]
+    assert labels == expected
+    assert state.session_spend_usd == 0
+    assert any("Free keyword match" in i.value for i in at.info)
+    table = labeled_table(state)
+    assert set(table["car_truck_bus_conf"]) <= {"1.00", ""}
+
+
+def test_keyword_edit_whole_words_marks_out_of_date(make_app):
+    at = _click(_add_keyword(_upload(make_app()), "car"), "run")
+    query_id = _state(at).queries[0].id
+    at = _click(at, "edit")
+    at.checkbox(key=f"edit_whole_{query_id}").uncheck().run()
+    at = at.button(key=f"save_{query_id}").click().run()
+    query = _state(at).queries[0]
+    assert query.whole_words is False and query.status == QueryStatus.OUT_OF_DATE

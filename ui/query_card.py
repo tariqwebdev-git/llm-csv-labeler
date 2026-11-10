@@ -4,8 +4,8 @@ import streamlit as st
 
 from labeler import config
 from labeler.errors import ApiConfigError, ApiKeyError
-from labeler.labeling_engine import estimate_cost, pick_test_rows, run_query
-from labeler.models import CostEstimate, Query
+from labeler.labeling_engine import estimate_cost, pick_test_rows, run_keyword_query, run_query
+from labeler.models import CostEstimate, Query, QueryKind
 from ui.answer_table import READ_HINT, show_table
 from ui.query_actions import delete_query, record_run, record_test, update_query_text
 from ui.result_tables import full_preview, split_test_rows
@@ -36,7 +36,8 @@ def _header(query: Query) -> bool:
                     help="Show the card" if collapsed else "Collapse the card"):
         st.session_state[collapsed_key] = not collapsed
         st.rerun()
-    title.markdown(f"**{query.name}** &nbsp; :small[:gray[{query.status.value}]]")
+    tag = " &nbsp; :blue-badge[Keyword]" if _is_keyword(query) else ""
+    title.markdown(f"**{query.name}** &nbsp; :small[:gray[{query.status.value}]]{tag}")
     return collapsed
 
 
@@ -45,15 +46,21 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
     ready = state.df is not None and state.text_column is not None
     editing = st.session_state.get(_key("editing", query), False)
 
+    keyword = _is_keyword(query)
     if editing:
         _editor(state, query)
+    elif keyword:
+        match = "whole words only" if query.whole_words else "also inside longer words"
+        st.write(f"Rows containing any of: **{query.text}** :small[:gray[({match}, upper/lower case ignored)]]")
     else:
         st.write(query.text)
 
     full = state.full_runs.get(query.id)
     if full:
-        _stats_box(full)
-    if ready and not editing:
+        _stats_box(full, keyword)
+    if ready and not editing and keyword:
+        st.caption("Free: keyword match, no API needed. Test and Run finish instantly.")
+    elif ready and not editing:
         column = state.df[state.text_column]
         test_texts = column.iloc[pick_test_rows(len(column))].tolist()
         test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
@@ -65,7 +72,7 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
                    f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
                    f"({full_est.rows_cached:,} already cached)")
 
-    _buttons(state, query, api_key, can_run=ready and bool(api_key) and not editing)
+    _buttons(state, query, api_key, can_run=ready and (keyword or bool(api_key)) and not editing)
     _delete_confirmation(state, query)
 
     test = state.test_runs.get(query.id)
@@ -73,7 +80,8 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
         _test_preview(state, query, test)
     if full and ready:
         with st.expander("Results: rows needing attention first, then lowest confidence"):
-            st.caption(f"Confidence close to 0.50 means the model was unsure. {READ_HINT}")
+            st.caption("Keyword matches are exact (confidence 1.00). " + READ_HINT if keyword else
+                       f"Confidence close to 0.50 means the model was unsure. {READ_HINT}")
             show_table(full_preview(state.df, state.text_column, query.name,
                                     full.result.labels, config.RESULT_PREVIEW_ROWS), state.text_column)
 
@@ -82,11 +90,21 @@ def _key(kind: str, query: Query) -> str:
     return f"{kind}_{query.id}"
 
 
+def _is_keyword(query: Query) -> bool:
+    return query.kind == QueryKind.KEYWORD
+
+
 def _editor(state: AppState, query: Query) -> None:
-    new_text = st.text_area("Edit query", value=query.text, key=_key("edit_text", query))
+    whole_words = None
+    if _is_keyword(query):
+        new_text = st.text_input("Edit words (separated by commas)", value=query.text, key=_key("edit_text", query))
+        whole_words = st.checkbox("Whole words only", value=query.whole_words, key=_key("edit_whole", query),
+                                  help="On: 'car' does not match 'scar'. Off: it also matches inside longer words.")
+    else:
+        new_text = st.text_area("Edit query", value=query.text, key=_key("edit_text", query))
     save, cancel = st.columns(2)
     if save.button("Save", key=_key("save", query), type="primary"):
-        update_query_text(state, query.id, new_text)
+        update_query_text(state, query.id, new_text, whole_words)
         st.session_state[_key("editing", query)] = False
         st.rerun()
     if cancel.button("Cancel", key=_key("cancel", query)):
@@ -94,12 +112,13 @@ def _editor(state: AppState, query: Query) -> None:
         st.rerun()
 
 
-def _stats_box(run: QueryRun) -> None:
+def _stats_box(run: QueryRun, keyword: bool = False) -> None:
     stats = run.result.stats
     notes = ", ".join(f"{count} {note}" for note, count in stats.note_counts.items()) or "none"
-    st.info(f"**{stats.matched:,} of {stats.rows_total:,} matched, {stats.not_labelled:,} not labelled**  \n"
-            f"Notes: {notes}  \n"
+    cost = (f"Free keyword match · {stats.seconds}s" if keyword else
             f"Cost \\${stats.cost_usd:.4f} · {stats.seconds}s · {stats.rows_from_cache:,} rows from cache")
+    st.info(f"**{stats.matched:,} of {stats.rows_total:,} matched, {stats.not_labelled:,} not labelled**  \n"
+            f"Notes: {notes}  \n{cost}")
 
 
 def _buttons(state: AppState, query: Query, api_key: str | None, can_run: bool) -> None:
@@ -136,6 +155,11 @@ def _run(state: AppState, query: Query, api_key: str, test_only: bool) -> None:
     column = state.df[state.text_column]
     indices = pick_test_rows(len(column)) if test_only else None
     texts = column.iloc[indices].tolist() if test_only else column.tolist()
+    if _is_keyword(query):
+        result = run_keyword_query(texts, query.text, query.whole_words)
+        run = QueryRun(result=result, query_text=query.text, row_indices=indices)
+        (record_test if test_only else record_run)(state, query, run)
+        st.rerun()
     bar = st.progress(0.0, text="Starting...")
     try:
         result = run_query(

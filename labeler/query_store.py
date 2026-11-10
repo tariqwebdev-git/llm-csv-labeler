@@ -4,16 +4,17 @@ from collections.abc import Iterable
 
 from labeler.column_utils import to_column_name, unique_column_name
 from labeler.errors import QueryFileError
-from labeler.models import Query
+from labeler.models import Query, QueryKind
 
 FORMAT_VERSION = 1
 
 
 def queries_to_json(queries: Iterable[Query]) -> str:
-    """Queries as a version-1 JSON document (name and text only)."""
+    """Queries as a version-1 JSON document: name, text, kind (llm/keyword) and whole_words."""
     data = {
         "version": FORMAT_VERSION,
-        "queries": [{"name": q.name, "text": q.text} for q in queries],
+        "queries": [{"name": q.name, "text": q.text, "kind": q.kind.value, "whole_words": q.whole_words}
+                    for q in queries],
     }
     return json.dumps(data, indent=2, ensure_ascii=False)
 
@@ -22,6 +23,7 @@ def queries_from_json(text: str, existing_names: Iterable[str] = ()) -> list[Que
     """Parse a query file into new 'Not run' queries.
 
     Names clashing with `existing_names` (or each other) get _2, _3, ...
+    Files saved before keyword queries existed have no "kind": they load as LLM queries.
     Raises QueryFileError with a plain message if the file is invalid.
     """
     try:
@@ -43,5 +45,16 @@ def queries_from_json(text: str, existing_names: Iterable[str] = ()) -> list[Que
         query_text = str(item["text"]).strip()
         name = unique_column_name(to_column_name(str(item.get("name") or query_text)), taken)
         taken.add(name)
-        queries.append(Query(name=name, text=query_text))
+        queries.append(Query(name=name, text=query_text, kind=_kind(item.get("kind")),
+                             whole_words=bool(item.get("whole_words", True))))
     return queries
+
+
+def _kind(value: object) -> QueryKind:
+    """'llm' / 'keyword' -> QueryKind; missing means LLM (older files)."""
+    if value is None:
+        return QueryKind.LLM
+    try:
+        return QueryKind(value)
+    except ValueError as exc:
+        raise QueryFileError(f"Unknown query kind '{value}' (expected 'llm' or 'keyword').") from exc
