@@ -26,6 +26,7 @@ from labeler.models import (
     RunStats,
     TokenUsage,
 )
+from labeler.keyword_matcher import match_keywords, parse_keywords
 from labeler.openai_client import OpenAIClassifier
 from labeler.prompt_builder import SYSTEM_PROMPT
 from labeler.result_cache import ResultCache
@@ -84,6 +85,21 @@ def run_query(
     ))
 
 
+def run_keyword_query(
+    texts: Sequence[object],
+    keywords_text: str,
+    whole_words: bool = config.KEYWORD_WHOLE_WORDS_DEFAULT,
+) -> RunResult:
+    """Label each text 1 if it contains any of the keywords ("car, truck, bus"), else 0.
+
+    No API call and no cost. Matching ignores case; whole_words=True means "car"
+    does not match "scar". Empty rows get note 'empty', as with LLM queries.
+    """
+    started = time.perf_counter()
+    labels = match_keywords(texts, parse_keywords(keywords_text), whole_words)
+    return RunResult(labels=labels, stats=_run_stats(labels, started))
+
+
 def clear_cache(cache_path: Path | None = None) -> None:
     """Delete all cached results."""
     with ResultCache(cache_path) as cache:
@@ -121,19 +137,26 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
             requests_sent = output.requests_sent
 
     row_labels = _labels_per_row(prepared, unique_labels)
-    stats = RunStats(
+    stats = _run_stats(row_labels, started, rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
+                       texts_sent=len(todo), requests_sent=requests_sent, usage=usage)
+    return RunResult(labels=row_labels, stats=stats)
+
+
+def _run_stats(row_labels: list[RowLabel], started: float, *, rows_from_cache: int = 0, texts_sent: int = 0,
+               requests_sent: int = 0, usage: TokenUsage = TokenUsage()) -> RunStats:
+    """Counts shown in the card's result box (same for LLM and keyword queries)."""
+    return RunStats(
         rows_total=len(row_labels),
         matched=sum(1 for r in row_labels if r.label == 1),
         not_labelled=sum(1 for r in row_labels if r.label is None),
         note_counts=dict(Counter(r.note.value for r in row_labels if r.note)),
-        rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
-        texts_sent=len(todo),
+        rows_from_cache=rows_from_cache,
+        texts_sent=texts_sent,
         requests_sent=requests_sent,
         usage=usage,
         cost_usd=cost_usd(usage),
         seconds=round(time.perf_counter() - started, 2),
     )
-    return RunResult(labels=row_labels, stats=stats)
 
 
 def _cache_keys(prepared: PreparedRows, query_text: str, model: str) -> list[str]:
