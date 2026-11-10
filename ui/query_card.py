@@ -5,7 +5,8 @@ import streamlit as st
 from labeler import config
 from labeler.errors import ApiConfigError, ApiKeyError
 from labeler.labeling_engine import estimate_cost, pick_test_rows, run_keyword_query, run_query
-from labeler.models import CostEstimate, Query, QueryKind
+from labeler.models import CostEstimate, Provider, Query, QueryKind
+from labeler.provider_settings import has_confidence
 from ui.answer_table import READ_HINT, show_table
 from ui.query_actions import delete_query, record_run, record_test, update_query_text
 from ui.result_tables import full_preview, split_test_rows
@@ -13,9 +14,10 @@ from ui.ui_models import AppState, QueryRun
 
 
 @st.cache_data(show_spinner=False, max_entries=256)
-def _estimate(file_id: str, column: str, query_text: str, cache_version: int, _texts: list) -> CostEstimate:
-    """Cached per file/column/wording; cache_version changes after every run or cache clear."""
-    return estimate_cost(_texts, query_text)
+def _estimate(file_id: str, column: str, query_text: str, cache_version: int, provider: Provider,
+              _texts: list) -> CostEstimate:
+    """Cached per file/column/wording/provider; cache_version changes after every run or cache clear."""
+    return estimate_cost(_texts, query_text, provider=provider)
 
 
 def render(state: AppState, query: Query, api_key: str | None) -> None:
@@ -77,13 +79,14 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
         column = state.df[state.text_column]
         test_texts = column.iloc[pick_test_rows(len(column))].tolist()
         test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
-                             state.cache_version, test_texts)
+                             state.cache_version, state.provider, test_texts)
         full_est = _estimate(state.file_id, state.text_column, query.text,
-                             state.cache_version, column.tolist())
+                             state.cache_version, state.provider, column.tolist())
+        no_conf = "" if has_confidence(state.provider) else " · Claude: labels without a confidence score for now"
         # "\$" stops Streamlit reading the text between two $ signs as a maths formula.
         st.caption(f"Estimate: test \\${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
                    f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "
-                   f"({full_est.rows_cached:,} already cached)")
+                   f"({full_est.rows_cached:,} already cached){no_conf}")
 
     _buttons(state, query, api_key, can_run=ready and (keyword or bool(api_key)) and not editing)
     _delete_confirmation(state, query)
@@ -176,7 +179,7 @@ def _run(state: AppState, query: Query, api_key: str, test_only: bool) -> None:
     bar = st.progress(0.0, text="Starting...")
     try:
         result = run_query(
-            texts, query.text, api_key=api_key,
+            texts, query.text, api_key=api_key, provider=state.provider,
             on_progress=lambda done, total: bar.progress(done / total, text=f"Batches {done}/{total}"),
         )
     except (ApiKeyError, ApiConfigError) as exc:

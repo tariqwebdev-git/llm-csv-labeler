@@ -15,6 +15,18 @@ PRICE_INPUT_PER_1M = 0.10
 PRICE_CACHED_INPUT_PER_1M = 0.01
 PRICE_OUTPUT_PER_1M = 0.50
 
+# --- Claude (Anthropic), the second provider ---------------------------------
+# Pick the provider in the app (gear icon, top right); PROVIDER is the starting choice.
+# Claude returns no token probabilities, so its labels have no confidence score yet
+# (the _conf column stays blank). Prices: Anthropic pricing, checked 2026-11-10
+# (rates for prompts up to 100K tokens; batches here are far smaller).
+PROVIDER = "openai"                 # "openai" or "anthropic"
+ANTHROPIC_MODEL = "claude-haiku-5-5"
+ANTHROPIC_PRICE_INPUT_PER_1M = 0.10
+ANTHROPIC_PRICE_CACHED_INPUT_PER_1M = 0.01
+ANTHROPIC_PRICE_OUTPUT_PER_1M = 0.50
+ANTHROPIC_API_KEY_ENV_VAR = "ANTHROPIC_API_KEY"
+
 # --- Batching and speed ------------------------------------------------------
 BATCH_SIZE = 10            # max rows per request; >20 lets answers drift between items (tested)
 MAX_BATCH_ITEM_TOKENS = 1000  # max text tokens per request; keeps long texts in small

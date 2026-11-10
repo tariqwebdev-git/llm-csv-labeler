@@ -25,7 +25,7 @@ def make_app(monkeypatch, tmp_path):
                         lambda texts, query, **kw: real_run(texts, query, **{**kw, "classifier": fake}))
 
     def build(api_key: str | None = "test-key") -> AppTest:
-        monkeypatch.setattr("labeler.api_key.load_api_key", lambda: api_key)
+        monkeypatch.setattr("labeler.api_key.load_api_key", lambda provider=None: api_key)
         return AppTest.from_file(str(ROOT / "app.py"), default_timeout=60).run()
 
     return build
@@ -276,3 +276,18 @@ def test_sidebar_shows_a_querys_rows_with_filter(make_app):
 def test_sidebar_button_disabled_before_any_run(make_app):
     at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
     assert at.button(key=f"sidebar_{_state(at).queries[0].id}").disabled
+
+
+def test_provider_choice_switches_key_status_and_runs_with_it(make_app, monkeypatch):
+    from labeler.models import Provider
+    seen = {}
+    real = query_card.run_query
+    monkeypatch.setattr(query_card, "run_query", lambda texts, query, **kw: (seen.update(kw), real(texts, query, **kw))[1])
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    assert any("OpenAI key" in m.value for m in at.markdown)
+    at.radio(key="provider_choice").set_value(Provider.ANTHROPIC).run()
+    assert _state(at).provider == Provider.ANTHROPIC
+    assert any("Claude key" in m.value for m in at.markdown)
+    assert any("without a confidence score" in c.value for c in at.caption)
+    _click(at, "test")
+    assert seen["provider"] == Provider.ANTHROPIC
