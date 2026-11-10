@@ -5,7 +5,7 @@ No Streamlit drawing here, so these rules are easy to read and test.
 from labeler.column_utils import to_column_name
 from labeler.models import Note, Query, QueryStatus, RunResult
 from labeler.output_builder import result_column_names
-from ui.ui_models import AppState, QueryRun
+from ui.ui_models import AppState, ColumnWorkspace, QueryRun
 
 _ERROR_NOTES = {Note.REFUSED.value, Note.BLOCKED.value, Note.FAILED.value}
 _COMPLETED = (QueryStatus.DONE, QueryStatus.DONE_WITH_ERRORS)
@@ -17,9 +17,13 @@ def find_query(state: AppState, query_id: str) -> Query | None:
 
 
 def free_column_name(state: AppState, wanted: str, exclude_id: str | None = None) -> str:
-    """A name whose 3 output columns clash with no CSV column and no other query."""
+    """A name whose 3 output columns clash with no CSV column and no other query.
+
+    Queries of every text column count, because all of them end up in one download.
+    """
     taken = set(state.df.columns) if state.df is not None else set()
-    for q in state.queries:
+    parked = [q for ws in state.workspaces.values() for q in ws.queries]
+    for q in state.queries + parked:
         if q.id != exclude_id:
             taken.update(result_column_names(q.name))
     base = to_column_name(wanted)
@@ -85,6 +89,6 @@ def reset_results(state: AppState) -> None:
         query.name = free_column_name(state, query.name, exclude_id=query.id)
 
 
-def completed_queries(state: AppState) -> list[Query]:
-    """Queries whose columns go into the download."""
-    return [q for q in state.queries if q.status in _COMPLETED and q.id in state.full_runs]
+def completed_queries(workspace: AppState | ColumnWorkspace) -> list[Query]:
+    """Queries whose columns go into the download (of the active column, or of one workspace)."""
+    return [q for q in workspace.queries if q.status in _COMPLETED and q.id in workspace.full_runs]
