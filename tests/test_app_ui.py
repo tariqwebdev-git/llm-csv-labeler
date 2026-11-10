@@ -253,3 +253,26 @@ def test_keyword_edit_whole_words_marks_out_of_date(make_app):
     at = at.button(key=f"save_{query_id}").click().run()
     query = _state(at).queries[0]
     assert query.whole_words is False and query.status == QueryStatus.OUT_OF_DATE
+
+
+def test_sidebar_shows_a_querys_rows_with_filter(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
+    state = _state(at)
+    query_id = state.queries[0].id
+    assert at.button(key=f"sidebar_{query_id}").disabled is False
+    at = _click(at, "sidebar")
+    assert _state(at).sidebar_query_id == query_id
+    assert any("rows of **person_hit_vehicle**" in m.value for m in at.sidebar.markdown)
+    matched = state.full_runs[query_id].result.stats.matched
+    at.segmented_control(key="sidebar_filter").set_value("Matched").run()
+    shown = at.sidebar.dataframe[0].value
+    shown = shown.data if hasattr(shown, "data") else shown
+    assert len(shown) == matched and set(shown["person_hit_vehicle"]) == {"1"}
+    at = at.button(key="sidebar_clear").click().run()
+    assert _state(at).sidebar_query_id is None
+    assert any("212 answers" in m.value for m in at.sidebar.markdown)
+
+
+def test_sidebar_button_disabled_before_any_run(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    assert at.button(key=f"sidebar_{_state(at).queries[0].id}").disabled

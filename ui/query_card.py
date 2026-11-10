@@ -21,16 +21,16 @@ def _estimate(file_id: str, column: str, query_text: str, cache_version: int, _t
 def render(state: AppState, query: Query, api_key: str | None) -> None:
     """Draw one query card. Collapsed, it shows only the name and status."""
     with st.container(border=True, key=_key("card", query)):
-        collapsed = _header(query)
+        collapsed = _header(state, query)
         if not collapsed:
             _body(state, query, api_key)
 
 
-def _header(query: Query) -> bool:
-    """Arrow + name + status on one line. Returns True if the card is collapsed."""
+def _header(state: AppState, query: Query) -> bool:
+    """Arrow + name + status + sidebar button on one line. Returns True if the card is collapsed."""
     collapsed_key = _key("collapsed", query)
     collapsed = st.session_state.get(collapsed_key, False)
-    arrow, title = st.columns([1, 30], gap="small", vertical_alignment="center")
+    arrow, title, sidebar = st.columns([1, 28, 2], gap="small", vertical_alignment="center")
     if arrow.button("", key=_key("toggle", query), type="tertiary",
                     icon=":material/chevron_right:" if collapsed else ":material/expand_more:",
                     help="Show the card" if collapsed else "Collapse the card"):
@@ -38,7 +38,20 @@ def _header(query: Query) -> bool:
         st.rerun()
     tag = " &nbsp; :blue-badge[Keyword]" if _is_keyword(query) else ""
     title.markdown(f"**{query.name}** &nbsp; :small[:gray[{query.status.value}]]{tag}")
+    _sidebar_button(state, query, sidebar)
     return collapsed
+
+
+def _sidebar_button(state: AppState, query: Query, place) -> None:
+    """Show (or stop showing) this query's rows in the sidebar. Needs a test or full run."""
+    showing = state.sidebar_query_id == query.id
+    has_results = query.id in state.full_runs or query.id in state.test_runs
+    if place.button("", key=_key("sidebar", query), icon=":material/view_sidebar:",
+                    type="primary" if showing else "tertiary", disabled=not has_results,
+                    help="Stop showing in the sidebar" if showing else
+                    "Show this query's rows in the sidebar" if has_results else "Test or run the query first"):
+        state.sidebar_query_id = None if showing else query.id
+        st.rerun()
 
 
 def _body(state: AppState, query: Query, api_key: str | None) -> None:
