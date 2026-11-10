@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from labeler.models import Query, RunResult
+from labeler.models import Provider, Query, RunResult
 
 
 @dataclass
@@ -38,5 +38,6 @@ class AppState:
     test_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> test
     workspaces: dict[str, ColumnWorkspace] = field(default_factory=dict)   # other columns
     sidebar_query_id: str | None = None   # query whose rows the sidebar shows (None = all answers)
+    provider: Provider = Provider.OPENAI  # who answers LLM queries (OpenAI or Claude)
     session_spend_usd: float = 0.0
     cache_version: int = 0                # bumped when cached results change
