@@ -15,8 +15,20 @@ class QueryRun:
 
 
 @dataclass
+class ColumnWorkspace:
+    """The queries and results of one text column. Each column has its own."""
+    queries: list[Query] = field(default_factory=list)
+    full_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> run
+    test_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> test
+
+
+@dataclass
 class AppState:
-    """Everything the app remembers between clicks (lives in st.session_state)."""
+    """Everything the app remembers between clicks (lives in st.session_state).
+
+    queries / full_runs / test_runs belong to the active text column. The other
+    columns' workspaces wait in `workspaces` until that column is picked again.
+    """
     df: pd.DataFrame | None = None
     file_id: str = ""                     # detects a new upload
     file_name: str = ""
@@ -24,5 +36,6 @@ class AppState:
     queries: list[Query] = field(default_factory=list)
     full_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> run
     test_runs: dict[str, QueryRun] = field(default_factory=dict)   # query id -> test
+    workspaces: dict[str, ColumnWorkspace] = field(default_factory=dict)   # other columns
     session_spend_usd: float = 0.0
     cache_version: int = 0                # bumped when cached results change

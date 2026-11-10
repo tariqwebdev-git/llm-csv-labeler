@@ -203,3 +203,16 @@ def test_old_python_stops_with_message(make_app, monkeypatch):
     at = make_app()
     assert any("needs Python 3.12" in e.value for e in at.error)
     assert not [w for w in at.text_input if w.key == "new_query_text"]   # nothing else drawn
+
+
+def test_switching_column_keeps_each_columns_queries(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
+    at.selectbox(key="text_column_select").select("safety_open").run()
+    assert _state(at).queries == []
+    at = _add(at, "Mentions feeling unsafe at night")
+    at.selectbox(key="text_column_select").select("transportation_open").run()
+    state = _state(at)
+    assert [q.name for q in state.queries] == ["person_hit_vehicle"]
+    assert state.queries[0].status == QueryStatus.DONE               # result kept
+    columns = list(labeled_table(state).columns)
+    assert columns.index("person_hit_vehicle") == columns.index("transportation_open") + 1
