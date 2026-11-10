@@ -21,6 +21,7 @@ Last updated: 2026-11-10
 | 2026-11-10 | Tariq tested Part 1. Fixes from his test: scrolling (now a one-window layout where only the query area scrolls) and narrow windows (sidebar capped at 45%, top bar wraps). Merged into `dev` and pushed. Video: not re-recorded (round 2; the earlier one stands). |
 | 2026-11-10 | **Released `v1.0.2`** (`dev` → `staging` → `main`, tag pushed). Zip `output/llm-csv-labeler-v1.0.2.zip`: 81 files, no internal files, no Asad/Upwork mentions. Clean install with uv (Python 3.12.10): 87 tests pass and the app starts. Old v1.0.1 zip deleted. |
 | 2026-11-10 | `INSTALL-MAC.md`: "Already using the app?" pointer at the top, plus "What's new" and update steps that work from the app folder (shown with Alex's `~/Code/llm-csv-labeler`). README matched. **v1.0.2 rebuilt:** tag moved to the new `main` commit and force-pushed (nobody had the old zip). Only docs changed, so the clean-install check still holds. **Alex gets only the zip:** no separate message or guide; the update steps are in the guide inside it. |
+| 2026-11-10 | **Part 2 built in house on `feature/part2`** (Alex said don't start; Asad said build in house): workspace per column, keyword queries (confidence 1.00, whole-words checkbox), sidebar filter per query, Claude option (labels only; confidence method to agree with the client). 112 tests, 14/14 browser checks. **Not merged into `dev`.** Details: `docs/milestone-3/post-development.md`. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -38,7 +39,7 @@ Last updated: 2026-11-10
 1. **Tariq's day-4 update to Asad:** Part 1 done, v1.0.2 zip, Python 3.12 (not 3.10, numpy needs it), hover not possible so double-click. Ask whether to send v1.0.2 to Alex, and when to plan Part 2.
 2. **After Asad agrees:** send Alex `llm-csv-labeler-v1.0.2.zip` only. The guide inside it starts with "Already using the app?" and links to "Getting a new version" (what's new and in-place update steps; his `.venv`, `.env` and `cache.db` stay).
 3. **Alex confirms:** the app runs (conda fix), the update steps work (`ditto`, macOS-only, untested here), and the CSV opens in Excel. If it fails, ask for the full error and `.venv/bin/python --version`.
-4. **Part 2** (Claude option, row filter per query, a workspace per column, keyword queries): only after Asad plans it. Hosting is quoted separately.
+4. **Part 2** is built on `feature/part2`, **not merged**. Merge into `dev` and release only when the client agrees. Still open: Alex confirms whole-word keyword matching; the Claude confidence method (stated score + vote check, to agree with the client); a live Claude check needs an `ANTHROPIC_API_KEY`. Hosting is quoted separately.
 5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
 
 **If a push is refused (403):** Windows Credential Manager may hold a different GitHub account (it once held `aasimdev`). Remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`.
