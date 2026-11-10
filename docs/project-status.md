@@ -38,7 +38,7 @@ Last updated: 2026-11-10
 1. **Tariq's day-4 update to Asad:** Part 1 done, v1.0.2 zip, Python 3.12 (not 3.10, numpy needs it), hover not possible so double-click. Ask whether to send v1.0.2 to Alex, and when to plan Part 2.
 2. **After Asad agrees:** send Alex `llm-csv-labeler-v1.0.2.zip` only. The guide inside it starts with "Already using the app?" and links to "Getting a new version" (what's new and in-place update steps; his `.venv`, `.env` and `cache.db` stay).
 3. **Alex confirms:** the app runs (conda fix), the update steps work (`ditto`, macOS-only, untested here), and the CSV opens in Excel. If it fails, ask for the full error and `.venv/bin/python --version`.
-4. **Part 2** (Claude option, row filter per query, a workspace per column, keyword queries): only after Asad plans it. Hosting is quoted separately.
+4. **Part 2** is built in house on **`feature/part2`** (Asad's go-ahead; Alex said not to start yet). **Not merged into `dev`** until the client agrees. Its own status notes are on that branch (`docs/milestone-3/`). Hosting is quoted separately.
 5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
 
 **If a push is refused (403):** Windows Credential Manager may hold a different GitHub account (it once held `aasimdev`). Remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`.
