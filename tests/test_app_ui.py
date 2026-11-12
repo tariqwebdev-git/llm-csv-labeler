@@ -25,7 +25,7 @@ def make_app(monkeypatch, tmp_path):
                         lambda texts, query, **kw: real_run(texts, query, **{**kw, "classifier": fake}))
 
     def build(api_key: str | None = "test-key") -> AppTest:
-        monkeypatch.setattr("labeler.api_key.load_api_key", lambda: api_key)
+        monkeypatch.setattr("labeler.api_key.load_api_key", lambda provider=None: api_key)
         return AppTest.from_file(str(ROOT / "app.py"), default_timeout=60).run()
 
     return build
@@ -203,3 +203,91 @@ def test_old_python_stops_with_message(make_app, monkeypatch):
     at = make_app()
     assert any("needs Python 3.12" in e.value for e in at.error)
     assert not [w for w in at.text_input if w.key == "new_query_text"]   # nothing else drawn
+
+
+def test_switching_column_keeps_each_columns_queries(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
+    at.selectbox(key="text_column_select").select("safety_open").run()
+    assert _state(at).queries == []
+    at = _add(at, "Mentions feeling unsafe at night")
+    at.selectbox(key="text_column_select").select("transportation_open").run()
+    state = _state(at)
+    assert [q.name for q in state.queries] == ["person_hit_vehicle"]
+    assert state.queries[0].status == QueryStatus.DONE               # result kept
+    columns = list(labeled_table(state).columns)
+    assert columns.index("person_hit_vehicle") == columns.index("transportation_open") + 1
+
+
+def _add_keyword(at: AppTest, words: str, whole_words: bool = True) -> AppTest:
+    at.text_input(key="new_keyword_text").input(words).run()
+    if not whole_words:
+        at.checkbox(key="new_keyword_whole_words").uncheck().run()
+    return at.button(key="add_keyword_query").click().run()
+
+
+def test_keyword_query_runs_without_api_key_and_is_free(make_app):
+    import re
+    import pandas as pd
+    at = _add_keyword(_upload(make_app(api_key=None)), "car, truck, bus")
+    query = _state(at).queries[0]
+    assert query.name == "car_truck_bus" and query.kind.value == "keyword"
+    assert not at.button(key=f"run_{query.id}").disabled
+    at = _click(at, "run")
+    state = _state(at)
+    labels = [r.label for r in state.full_runs[query.id].result.labels]
+    texts = pd.read_csv(ROOT / "sample_data" / "sample.csv", dtype=str, keep_default_na=False)["transportation_open"]
+    pattern = re.compile(r"(?<!\w)(?:truck|car|bus)(?!\w)", re.IGNORECASE)
+    expected = [None if not t.strip() else int(bool(pattern.search(t))) for t in texts]
+    assert labels == expected
+    assert state.session_spend_usd == 0
+    assert any("Free keyword match" in i.value for i in at.info)
+    table = labeled_table(state)
+    assert set(table["car_truck_bus_conf"]) <= {"1.00", ""}
+
+
+def test_keyword_edit_whole_words_marks_out_of_date(make_app):
+    at = _click(_add_keyword(_upload(make_app()), "car"), "run")
+    query_id = _state(at).queries[0].id
+    at = _click(at, "edit")
+    at.checkbox(key=f"edit_whole_{query_id}").uncheck().run()
+    at = at.button(key=f"save_{query_id}").click().run()
+    query = _state(at).queries[0]
+    assert query.whole_words is False and query.status == QueryStatus.OUT_OF_DATE
+
+
+def test_sidebar_shows_a_querys_rows_with_filter(make_app):
+    at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
+    state = _state(at)
+    query_id = state.queries[0].id
+    assert at.button(key=f"sidebar_{query_id}").disabled is False
+    at = _click(at, "sidebar")
+    assert _state(at).sidebar_query_id == query_id
+    assert any("rows of **person_hit_vehicle**" in m.value for m in at.sidebar.markdown)
+    matched = state.full_runs[query_id].result.stats.matched
+    at.segmented_control(key="sidebar_filter").set_value("Matched").run()
+    shown = at.sidebar.dataframe[0].value
+    shown = shown.data if hasattr(shown, "data") else shown
+    assert len(shown) == matched and set(shown["person_hit_vehicle"]) == {"1"}
+    at = at.button(key="sidebar_clear").click().run()
+    assert _state(at).sidebar_query_id is None
+    assert any("212 answers" in m.value for m in at.sidebar.markdown)
+
+
+def test_sidebar_button_disabled_before_any_run(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    assert at.button(key=f"sidebar_{_state(at).queries[0].id}").disabled
+
+
+def test_provider_choice_switches_key_status_and_runs_with_it(make_app, monkeypatch):
+    from labeler.models import Provider
+    seen = {}
+    real = query_card.run_query
+    monkeypatch.setattr(query_card, "run_query", lambda texts, query, **kw: (seen.update(kw), real(texts, query, **kw))[1])
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    assert any("OpenAI key" in m.value for m in at.markdown)
+    at.radio(key="provider_choice").set_value(Provider.ANTHROPIC).run()
+    assert _state(at).provider == Provider.ANTHROPIC
+    assert any("Claude key" in m.value for m in at.markdown)
+    assert any("without a confidence score" in c.value for c in at.caption)
+    _click(at, "test")
+    assert seen["provider"] == Provider.ANTHROPIC

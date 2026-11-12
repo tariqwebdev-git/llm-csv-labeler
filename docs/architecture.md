@@ -43,25 +43,30 @@ llm-csv-labeler/
 │   ├── page_style.py + .css      # custom CSS: one-window layout, only the query area scrolls; compact upload (no "<" in the CSS)
 │   ├── upload_section.py         # top bar: compact file picker + text column
 │   ├── session_info.py           # top right: key status, spend, Settings (model, Clear cache); warnings
-│   ├── query_form_section.py     # top bar: single-line Create Query form
+│   ├── query_form_section.py     # top bar: New LLM Query / New Keyword Query tabs
 │   ├── data_preview_section.py   # empty-row warnings + preview (collapsed by default)
 │   ├── query_actions.py          # state rules: add/edit/delete/record results (no drawing)
+│   ├── workspace_actions.py      # each text column has its own queries/results (switch, all, counts)
 │   ├── result_tables.py          # preview order, test-run split
 │   ├── answer_table.py           # every answers table: wrapped rows, double-click for full text
 │   ├── query_list_section.py     # all cards (the main part of the page)
 │   ├── query_card.py             # one card: collapsible header, edit, test, run, delete, stats box
 │   ├── query_file_section.py     # bottom bar: Save queries, Load queries (popover)
 │   ├── download_section.py       # bottom bar: Download CSV (new columns after the text column)
-│   └── reading_list_sidebar.py   # sidebar: non-empty answers of the chosen column
+│   └── reading_list_sidebar.py   # sidebar: answers of the chosen column, or one query's rows (filter, green matches)
 ├── labeler/
 │   ├── config.py                 # settings only: model, prices, batch size, limits
 │   ├── models.py                 # types only: dataclasses and enums
 │   ├── errors.py                 # exception classes only
-│   ├── api_key.py                # load OPENAI_API_KEY from .env
+│   ├── api_key.py                # load the chosen provider's key (OPENAI_API_KEY / ANTHROPIC_API_KEY) from .env
 │   ├── environment_check.py      # is the app running from its own .venv? (warning at the top)
 │   ├── python_version_check.py   # stops the app with a clear message on Python older than 3.12
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
-│   ├── openai_client.py          # the only OpenAI caller
+│   ├── openai_client.py          # the only OpenAI caller (labels + logprob confidence)
+│   ├── anthropic_client.py       # the only Anthropic (Claude) caller; labels only, confidence method to be agreed
+│   ├── classifier_factory.py     # make_classifier(provider): OpenAI or Claude
+│   ├── provider_settings.py      # per-provider model, prices, key name (from config.py)
+│   ├── keyword_matcher.py        # keyword queries: case-insensitive, whole words optional, no API
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence
 │   ├── row_preparer.py           # empty/trim checks, de-duplication
 │   ├── batch_planner.py          # groups rows into small batches (row count + token budget)

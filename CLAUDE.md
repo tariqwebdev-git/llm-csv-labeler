@@ -22,7 +22,8 @@ Browser checks (Playwright + Edge, separate venv, layout/scroll/end-to-end): see
 ## Architecture (full detail: docs/architecture.md)
 - `app.py` + `ui/`: Streamlit only. They never call OpenAI, SQLite or the file system directly. They call `labeler.labeling_engine`.
 - `labeler/`: core logic, with no Streamlit imports (so it can be reused by a future hosted version).
-- `openai_client.py` is the only file that talks to OpenAI.
+- `openai_client.py` is the only file that talks to OpenAI; `anthropic_client.py` the only one that talks to Anthropic (Claude, `claude-haiku-5-5`, no temperature, thinking disabled, labels only: Claude has no logprobs, so `_conf` is blank until the confidence method is agreed with the client). Provider choice: `classifier_factory.make_classifier`, `provider_settings` (model/prices/key per provider), gear menu in the UI.
+- Keyword queries (`keyword_matcher.py`, `labeling_engine.run_keyword_query`): local, free, confidence 1.00, per-query whole-words checkbox. Each text column has its own workspace (`ui/workspace_actions.py`).
 - `environment_check.py`: the sidebar warns when the app is not started from the project's own env (conda base broke Alex's first run: old `brotli` there crashes the OpenAI SDK's reply decoding). Setup commands use `uv pip install --python .venv` and `.venv/bin/python -m streamlit` so conda can't interfere.
 - Settings (model, prices, batch size, concurrency, limits) live only in `labeler/config.py`. Model: **`gpt-6-luna` with `REASONING_EFFORT="none"`** (needed for logprobs). gpt-4o-mini/gpt-4o shut down 2027-01-14; gpt-4.1-nano already retired. Python **3.12+** (numpy pin); `requirements.txt` is pinned exactly.
 - **Batches stay small (10 rows / 1,000 tokens)**: bigger batches make answers drift between items (see docs/milestone-2/post-development.md). Batching is planned in `batch_planner.py`.

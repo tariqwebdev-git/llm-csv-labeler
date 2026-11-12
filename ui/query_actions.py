@@ -3,9 +3,9 @@
 No Streamlit drawing here, so these rules are easy to read and test.
 """
 from labeler.column_utils import to_column_name
-from labeler.models import Note, Query, QueryStatus, RunResult
+from labeler.models import Note, Query, QueryKind, QueryStatus, RunResult
 from labeler.output_builder import result_column_names
-from ui.ui_models import AppState, QueryRun
+from ui.ui_models import AppState, ColumnWorkspace, QueryRun
 
 _ERROR_NOTES = {Note.REFUSED.value, Note.BLOCKED.value, Note.FAILED.value}
 _COMPLETED = (QueryStatus.DONE, QueryStatus.DONE_WITH_ERRORS)
@@ -17,9 +17,13 @@ def find_query(state: AppState, query_id: str) -> Query | None:
 
 
 def free_column_name(state: AppState, wanted: str, exclude_id: str | None = None) -> str:
-    """A name whose 3 output columns clash with no CSV column and no other query."""
+    """A name whose 3 output columns clash with no CSV column and no other query.
+
+    Queries of every text column count, because all of them end up in one download.
+    """
     taken = set(state.df.columns) if state.df is not None else set()
-    for q in state.queries:
+    parked = [q for ws in state.workspaces.values() for q in ws.queries]
+    for q in state.queries + parked:
         if q.id != exclude_id:
             taken.update(result_column_names(q.name))
     base = to_column_name(wanted)
@@ -30,9 +34,11 @@ def free_column_name(state: AppState, wanted: str, exclude_id: str | None = None
     return candidate
 
 
-def add_query(state: AppState, text: str, name: str) -> Query:
-    """Add a 'Not run' query with a clash-free column name."""
-    query = Query(name=free_column_name(state, name or text), text=text.strip())
+def add_query(state: AppState, text: str, name: str, kind: QueryKind = QueryKind.LLM,
+              whole_words: bool = True) -> Query:
+    """Add a 'Not run' query (LLM or keyword) with a clash-free column name."""
+    query = Query(name=free_column_name(state, name or text), text=text.strip(), kind=kind,
+                  whole_words=whole_words)
     state.queries.append(query)
     return query
 
@@ -44,13 +50,16 @@ def delete_query(state: AppState, query_id: str) -> None:
     state.test_runs.pop(query_id, None)
 
 
-def update_query_text(state: AppState, query_id: str, text: str) -> None:
-    """New wording: an old full result becomes Out of date; an old test is dropped."""
+def update_query_text(state: AppState, query_id: str, text: str, whole_words: bool | None = None) -> None:
+    """New wording (or, for a keyword query, a new whole-words choice): an old full
+    result becomes Out of date; an old test is dropped."""
     query = find_query(state, query_id)
     text = text.strip()
-    if query is None or not text or text == query.text:
+    whole_words = query.whole_words if query is not None and whole_words is None else whole_words
+    if query is None or not text or (text == query.text and whole_words == query.whole_words):
         return
     query.text = text
+    query.whole_words = whole_words
     state.test_runs.pop(query_id, None)
     query.status = QueryStatus.OUT_OF_DATE if query_id in state.full_runs else QueryStatus.NOT_RUN
 
@@ -85,6 +94,6 @@ def reset_results(state: AppState) -> None:
         query.name = free_column_name(state, query.name, exclude_id=query.id)
 
 
-def completed_queries(state: AppState) -> list[Query]:
-    """Queries whose columns go into the download."""
-    return [q for q in state.queries if q.status in _COMPLETED and q.id in state.full_runs]
+def completed_queries(workspace: AppState | ColumnWorkspace) -> list[Query]:
+    """Queries whose columns go into the download (of the active column, or of one workspace)."""
+    return [q for q in workspace.queries if q.status in _COMPLETED and q.id in workspace.full_runs]

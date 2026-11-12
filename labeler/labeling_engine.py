@@ -21,13 +21,16 @@ from labeler.models import (
     Note,
     PreparedRows,
     ProgressCallback,
+    Provider,
     RowLabel,
     RunResult,
     RunStats,
     TokenUsage,
 )
-from labeler.openai_client import OpenAIClassifier
+from labeler.keyword_matcher import match_keywords, parse_keywords
+from labeler.classifier_factory import make_classifier
 from labeler.prompt_builder import SYSTEM_PROMPT
+from labeler.provider_settings import default_provider, model_for
 from labeler.result_cache import ResultCache
 from labeler.row_preparer import prepare_rows
 
@@ -43,10 +46,17 @@ def estimate_cost(
     texts: Sequence[object],
     query_text: str,
     *,
-    model: str = config.MODEL,
+    provider: Provider | None = None,
+    model: str | None = None,
     cache_path: Path | None = None,
 ) -> CostEstimate:
-    """Estimated cost of labelling `texts`. Cached and duplicate texts cost nothing."""
+    """Estimated cost of labelling `texts`. Cached and duplicate texts cost nothing.
+
+    provider: OpenAI or Claude (default: config.PROVIDER); model: that provider's
+    configured model unless given.
+    """
+    provider = provider or default_provider()
+    model = model or model_for(provider)
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
     keys = _cache_keys(prepared, query_text, model)
     with ResultCache(cache_path) as cache:
@@ -60,7 +70,7 @@ def estimate_cost(
         texts_to_send=len(to_send),
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        cost_usd=cost_usd(TokenUsage(input_tokens=input_tokens, output_tokens=output_tokens)),
+        cost_usd=cost_usd(TokenUsage(input_tokens=input_tokens, output_tokens=output_tokens), provider),
     )
 
 
@@ -70,18 +80,36 @@ def run_query(
     *,
     api_key: str | None = None,
     on_progress: ProgressCallback | None = None,
-    model: str = config.MODEL,
+    provider: Provider | None = None,
+    model: str | None = None,
     cache_path: Path | None = None,
     classifier: Classifier | None = None,
 ) -> RunResult:
     """Label each text against `query_text`. Returns one RowLabel per text, same order.
 
-    Raises ApiKeyError / ApiConfigError if the run cannot continue.
-    `classifier` is for tests; normally an OpenAIClassifier is created from api_key.
+    provider: OpenAI or Claude (default: config.PROVIDER). Claude labels have no
+    confidence score yet. Raises ApiKeyError / ApiConfigError if the run cannot continue.
+    `classifier` is for tests; normally one is created for the provider from api_key.
     """
+    provider = provider or default_provider()
     return asyncio.run(_run_query_async(
-        texts, query_text, api_key, on_progress, model, cache_path, classifier
+        texts, query_text, api_key, on_progress, provider, model or model_for(provider), cache_path, classifier
     ))
+
+
+def run_keyword_query(
+    texts: Sequence[object],
+    keywords_text: str,
+    whole_words: bool = config.KEYWORD_WHOLE_WORDS_DEFAULT,
+) -> RunResult:
+    """Label each text 1 if it contains any of the keywords ("car, truck, bus"), else 0.
+
+    No API call and no cost. Matching ignores case; whole_words=True means "car"
+    does not match "scar". Empty rows get note 'empty', as with LLM queries.
+    """
+    started = time.perf_counter()
+    labels = match_keywords(texts, parse_keywords(keywords_text), whole_words)
+    return RunResult(labels=labels, stats=_run_stats(labels, started))
 
 
 def clear_cache(cache_path: Path | None = None) -> None:
@@ -90,7 +118,8 @@ def clear_cache(cache_path: Path | None = None) -> None:
         cache.clear()
 
 
-async def _run_query_async(texts, query_text, api_key, on_progress, model, cache_path, classifier) -> RunResult:
+async def _run_query_async(texts, query_text, api_key, on_progress, provider, model, cache_path,
+                           classifier) -> RunResult:
     started = time.perf_counter()
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
     keys = _cache_keys(prepared, query_text, model)
@@ -103,7 +132,7 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
         requests_sent = 0
 
         if todo:
-            client = classifier or OpenAIClassifier(api_key, model)
+            client = classifier or make_classifier(provider, api_key, model)
 
             def save_batch(batch_labels: dict[int, RowLabel]) -> None:
                 cache.put_many({keys[todo[i]]: label for i, label in batch_labels.items()})
@@ -121,19 +150,27 @@ async def _run_query_async(texts, query_text, api_key, on_progress, model, cache
             requests_sent = output.requests_sent
 
     row_labels = _labels_per_row(prepared, unique_labels)
-    stats = RunStats(
+    stats = _run_stats(row_labels, started, rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
+                       texts_sent=len(todo), requests_sent=requests_sent, usage=usage, provider=provider)
+    return RunResult(labels=row_labels, stats=stats)
+
+
+def _run_stats(row_labels: list[RowLabel], started: float, *, rows_from_cache: int = 0, texts_sent: int = 0,
+               requests_sent: int = 0, usage: TokenUsage = TokenUsage(),
+               provider: Provider = Provider.OPENAI) -> RunStats:
+    """Counts shown in the card's result box (same for LLM and keyword queries)."""
+    return RunStats(
         rows_total=len(row_labels),
         matched=sum(1 for r in row_labels if r.label == 1),
         not_labelled=sum(1 for r in row_labels if r.label is None),
         note_counts=dict(Counter(r.note.value for r in row_labels if r.note)),
-        rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
-        texts_sent=len(todo),
+        rows_from_cache=rows_from_cache,
+        texts_sent=texts_sent,
         requests_sent=requests_sent,
         usage=usage,
-        cost_usd=cost_usd(usage),
+        cost_usd=cost_usd(usage, provider),
         seconds=round(time.perf_counter() - started, 2),
     )
-    return RunResult(labels=row_labels, stats=stats)
 
 
 def _cache_keys(prepared: PreparedRows, query_text: str, model: str) -> list[str]:

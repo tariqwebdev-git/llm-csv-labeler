@@ -13,6 +13,6 @@ def render(state: AppState, api_key: str | None) -> None:
     if state.df is None:
         st.info("Upload a CSV to test or run queries.")
     elif not api_key:
-        st.warning("Test and Run are disabled until the API key is found.")
+        st.warning("LLM queries can't be tested or run until the API key is found. Keyword queries work without it.")
     for query in list(state.queries):
         query_card.render(state, query, api_key)
