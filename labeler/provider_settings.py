@@ -28,6 +28,7 @@ def api_key_env_var(provider: Provider) -> str:
     return config.ANTHROPIC_API_KEY_ENV_VAR if provider == Provider.ANTHROPIC else config.API_KEY_ENV_VAR
 
 
-def has_confidence(provider: Provider) -> bool:
-    """False for Claude: its API has no token probabilities, so _conf stays blank for now."""
+def uses_logprobs(provider: Provider) -> bool:
+    """True if confidence comes from token probabilities (OpenAI). False for Claude, whose
+    confidence comes from its own rating plus re-checks (confidence_check.py)."""
     return provider != Provider.ANTHROPIC

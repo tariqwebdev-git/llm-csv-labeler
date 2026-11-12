@@ -24,7 +24,7 @@ from labeler.models import (
     RowLabel,
     TokenUsage,
 )
-from labeler.prompt_builder import SYSTEM_PROMPT, build_batch_prompt
+from labeler.prompt_builder import build_batch_prompt, system_prompt
 from labeler.response_parser import parse_reply
 
 _REPLY_OVERHEAD_TOKENS = 16
@@ -38,9 +38,12 @@ class BatchRunner:
         *,
         batch_size: int = config.BATCH_SIZE,
         max_concurrent: int = config.MAX_CONCURRENT,
+        scored: bool = False,
     ):
+        """scored=True asks for "<id>|<label>|<certainty>" lines (models without logprobs)."""
         self._classifier = classifier
         self._criterion = criterion
+        self._scored = scored
         self._batch_size = batch_size
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._usage = TokenUsage()
@@ -111,12 +114,14 @@ class BatchRunner:
 
     async def _send(self, items: list[str]) -> LLMReply | None:
         """One API call under the concurrency limit. None means it failed after retries."""
-        max_tokens = len(items) * config.OUTPUT_TOKENS_PER_ROW_LIMIT + _REPLY_OVERHEAD_TOKENS
+        per_row = config.OUTPUT_TOKENS_PER_ROW_LIMIT + (config.SCORE_OUTPUT_TOKENS_PER_ROW if self._scored else 0)
+        max_tokens = len(items) * per_row + _REPLY_OVERHEAD_TOKENS
         async with self._semaphore:
             self._requests_sent += 1
             try:
                 reply = await self._classifier.classify(
-                    SYSTEM_PROMPT, build_batch_prompt(self._criterion, items), max_tokens
+                    system_prompt(self._scored), build_batch_prompt(self._criterion, items, self._scored),
+                    max_tokens,
                 )
             except ApiCallError:
                 return None

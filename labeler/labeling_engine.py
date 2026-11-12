@@ -29,8 +29,9 @@ from labeler.models import (
 )
 from labeler.keyword_matcher import match_keywords, parse_keywords
 from labeler.classifier_factory import make_classifier
-from labeler.prompt_builder import SYSTEM_PROMPT
-from labeler.provider_settings import default_provider, model_for
+from labeler.confidence_check import combine_votes, finalize, is_doubtful
+from labeler.prompt_builder import system_prompt
+from labeler.provider_settings import default_provider, model_for, uses_logprobs
 from labeler.result_cache import ResultCache
 from labeler.row_preparer import prepare_rows
 
@@ -58,12 +59,12 @@ def estimate_cost(
     provider = provider or default_provider()
     model = model or model_for(provider)
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
-    keys = _cache_keys(prepared, query_text, model)
+    keys = _cache_keys(prepared, query_text, model, scored=not uses_logprobs(provider))
     with ResultCache(cache_path) as cache:
         cached = cache.get_many(keys)
 
     to_send = [text for text, key in zip(prepared.unique_texts, keys) if key not in cached]
-    input_tokens, output_tokens = estimate_tokens(to_send, query_text)
+    input_tokens, output_tokens = estimate_tokens(to_send, query_text, scored=not uses_logprobs(provider))
     return CostEstimate(
         rows_total=len(texts),
         rows_cached=_rows_with_cached_text(prepared, keys, cached.keys()),
@@ -87,8 +88,9 @@ def run_query(
 ) -> RunResult:
     """Label each text against `query_text`. Returns one RowLabel per text, same order.
 
-    provider: OpenAI or Claude (default: config.PROVIDER). Claude labels have no
-    confidence score yet. Raises ApiKeyError / ApiConfigError if the run cannot continue.
+    provider: OpenAI or Claude (default: config.PROVIDER). OpenAI's confidence comes from
+    token probabilities; Claude's from its own rating plus re-checks of doubtful rows
+    (confidence_check.py). Raises ApiKeyError / ApiConfigError if the run cannot continue.
     `classifier` is for tests; normally one is created for the provider from api_key.
     """
     provider = provider or default_provider()
@@ -122,7 +124,8 @@ async def _run_query_async(texts, query_text, api_key, on_progress, provider, mo
                            classifier) -> RunResult:
     started = time.perf_counter()
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
-    keys = _cache_keys(prepared, query_text, model)
+    scored = not uses_logprobs(provider)
+    keys = _cache_keys(prepared, query_text, model, scored)
 
     with ResultCache(cache_path) as cache:
         cached = cache.get_many(keys)
@@ -133,21 +136,26 @@ async def _run_query_async(texts, query_text, api_key, on_progress, provider, mo
 
         if todo:
             client = classifier or make_classifier(provider, api_key, model)
+            todo_texts = [prepared.unique_texts[i] for i in todo]
 
             def save_batch(batch_labels: dict[int, RowLabel]) -> None:
-                cache.put_many({keys[todo[i]]: label for i, label in batch_labels.items()})
+                # Scored (Claude): doubtful rows are saved only after their re-check.
+                cache.put_many({keys[todo[i]]: finalize(label) if scored else label
+                                for i, label in batch_labels.items() if not (scored and is_doubtful(label))})
 
             try:
-                output = await BatchRunner(client, query_text).run(
-                    [prepared.unique_texts[i] for i in todo], on_progress, save_batch
-                )
+                output = await BatchRunner(client, query_text, scored=scored).run(todo_texts, on_progress,
+                                                                                   save_batch)
+                labels, usage, requests_sent = output.labels, output.usage, output.requests_sent
+                if scored:
+                    labels, check_usage, check_requests = await _vote_check(client, query_text, todo_texts, labels)
+                    usage, requests_sent = _add_usage(usage, check_usage), requests_sent + check_requests
+                    cache.put_many({keys[todo[i]]: label for i, label in labels.items()})
             finally:
                 if classifier is None:
                     await client.close()
-            for i, label in output.labels.items():
+            for i, label in labels.items():
                 unique_labels[todo[i]] = label
-            usage = output.usage
-            requests_sent = output.requests_sent
 
     row_labels = _labels_per_row(prepared, unique_labels)
     stats = _run_stats(row_labels, started, rows_from_cache=_rows_with_cached_text(prepared, keys, cached.keys()),
@@ -173,8 +181,34 @@ def _run_stats(row_labels: list[RowLabel], started: float, *, rows_from_cache: i
     )
 
 
-def _cache_keys(prepared: PreparedRows, query_text: str, model: str) -> list[str]:
-    return [ResultCache.make_key(model, SYSTEM_PROMPT, query_text, t) for t in prepared.unique_texts]
+async def _vote_check(client: Classifier, query_text: str, texts: list[str],
+                      labels: dict[int, RowLabel]) -> tuple[dict[int, RowLabel], TokenUsage, int]:
+    """Ask doubtful rows again (VOTE_CHECK_ROUNDS times, shuffled so neighbours differ)
+    and combine the votes. Returns the final labels, extra token usage and requests."""
+    doubtful = [i for i, label in labels.items() if is_doubtful(label)]
+    votes: dict[int, list[RowLabel]] = {i: [] for i in doubtful}
+    usage, requests = TokenUsage(), 0
+    for round_number in range(config.VOTE_CHECK_ROUNDS if doubtful else 0):
+        order = doubtful[:]
+        random.Random(round_number + 1).shuffle(order)
+        output = await BatchRunner(client, query_text, scored=True).run([texts[i] for i in order])
+        for position, label in output.labels.items():
+            votes[order[position]].append(label)
+        usage, requests = _add_usage(usage, output.usage), requests + output.requests_sent
+    final = {i: combine_votes(label, votes[i]) if i in votes else finalize(label) for i, label in labels.items()}
+    return final, usage, requests
+
+
+def _add_usage(a: TokenUsage, b: TokenUsage) -> TokenUsage:
+    return TokenUsage(a.input_tokens + b.input_tokens, a.cached_input_tokens + b.cached_input_tokens,
+                      a.output_tokens + b.output_tokens)
+
+
+def _cache_keys(prepared: PreparedRows, query_text: str, model: str, scored: bool = False) -> list[str]:
+    """One key per unique text. The scored (Claude) prompt gives different keys, so
+    OpenAI's cached results are untouched."""
+    prompt = system_prompt(scored)
+    return [ResultCache.make_key(model, prompt, query_text, t) for t in prepared.unique_texts]
 
 
 def _rows_with_cached_text(prepared: PreparedRows, keys: list[str], cached_keys) -> int:

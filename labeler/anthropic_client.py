@@ -2,8 +2,9 @@
 OpenAIClassifier, so the rest of the app does not care which provider answers.
 
 Confidence: Claude's API returns no token probabilities (logprobs), so the reply
-carries no tokens and labels come without a confidence score (_conf stays blank).
-The agreed confidence method plugs in here, in `classify`, once it is decided.
+carries no tokens. Instead the scored prompt asks Claude to rate its certainty on
+each line ("3|1|85"), and doubtful rows are asked again (labeling_engine._vote_check,
+confidence_check.py). This file only sends the prompt and returns the reply text.
 """
 import anthropic
 from anthropic import AsyncAnthropic
@@ -74,7 +75,7 @@ def _to_reply(response) -> LLMReply:
     cache_write = usage.cache_creation_input_tokens or 0
     return LLMReply(
         content=content,
-        tokens=[],                       # no logprobs from Claude -> no confidence score yet
+        tokens=[],                       # no logprobs from Claude: confidence comes from the stated score
         usage=TokenUsage(
             input_tokens=usage.input_tokens + cache_read + cache_write,
             cached_input_tokens=cache_read,

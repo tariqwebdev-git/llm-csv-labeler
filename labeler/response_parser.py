@@ -1,10 +1,12 @@
-"""Turn a model reply ("1|0\\n2|1 ...") plus token logprobs into labels and confidence."""
+"""Turn a model reply ("1|0\\n2|1 ...", or from Claude "1|0|85 ...") plus token logprobs
+into labels and confidence."""
 import math
 import re
 
 from labeler.models import RowLabel, TokenLogprob
 
-_LINE = re.compile(r"^\s*(\d+)\s*\|\s*([01])\s*$", re.MULTILINE)
+_LINE = re.compile(r"^\s*(\d+)\s*\|\s*([01])\s*(?:\|\s*(\d{1,3})\s*)?$", re.MULTILINE)
+_MIN_SCORE, _MAX_SCORE = 50, 100     # a stated certainty ("|85") is clamped to this range
 _ANSWERS = ("0", "1")
 
 
@@ -23,10 +25,14 @@ def parse_reply(content: str, tokens: list[TokenLogprob], batch_size: int) -> di
         if not 1 <= local_id <= batch_size or local_id in results:
             continue
         token = token_at.get(match.start(2))
-        results[local_id] = RowLabel(
-            label=int(answer),
-            confidence=_confidence(token, answer) if token else None,
-        )
+        score = match.group(3)
+        if token:                       # OpenAI: confidence from token probabilities
+            confidence = _confidence(token, answer)
+        elif score is not None:         # Claude: the model's own 50-100 rating
+            confidence = min(max(int(score), _MIN_SCORE), _MAX_SCORE) / 100
+        else:
+            confidence = None
+        results[local_id] = RowLabel(label=int(answer), confidence=confidence)
     return results
 
 

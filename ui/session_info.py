@@ -32,7 +32,7 @@ def _settings_menu(state: AppState) -> None:
         st.radio("AI for LLM queries", list(Provider), index=list(Provider).index(state.provider),
                  key=_PROVIDER_KEY, on_change=_set_provider, args=(state,),
                  format_func=lambda p: f"{PROVIDER_LABELS[p]} ({model_for(p)})",
-                 help="Claude needs its own key in .env and gives labels without a confidence score for now. "
+                 help="Claude needs its own key in .env. Its confidence comes from its own rating plus re-checks of unsure rows. "
                       "Each AI keeps its own saved results.")
         if st.button("Clear cache", key="clear_cache",
                      help="Forget saved results. The next run of every query is charged again."):

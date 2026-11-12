@@ -17,8 +17,8 @@ PRICE_OUTPUT_PER_1M = 0.50
 
 # --- Claude (Anthropic), the second provider ---------------------------------
 # Pick the provider in the app (gear icon, top right); PROVIDER is the starting choice.
-# Claude returns no token probabilities, so its labels have no confidence score yet
-# (the _conf column stays blank). Prices: Anthropic pricing, checked 2026-11-10
+# Claude returns no token probabilities, so its confidence comes from its own rating plus
+# re-checks of unsure rows (see below). Prices: Anthropic pricing, checked 2026-11-10
 # (rates for prompts up to 100K tokens; batches here are far smaller).
 PROVIDER = "openai"                 # "openai" or "anthropic"
 ANTHROPIC_MODEL = "claude-haiku-5-5"
@@ -26,6 +26,17 @@ ANTHROPIC_PRICE_INPUT_PER_1M = 0.10
 ANTHROPIC_PRICE_CACHED_INPUT_PER_1M = 0.01
 ANTHROPIC_PRICE_OUTPUT_PER_1M = 0.50
 ANTHROPIC_API_KEY_ENV_VAR = "ANTHROPIC_API_KEY"
+
+# Confidence without token probabilities (Claude): each row gets the model's own 50-100
+# rating; rows rated below VOTE_CHECK_BELOW are asked again VOTE_CHECK_ROUNDS times and
+# the majority answer wins ("vote check"). Costs about 1.5-2x a single pass.
+VOTE_CHECK_BELOW = 0.80          # rows rated under this are re-checked
+VOTE_CHECK_ROUNDS = 4            # extra asks per doubtful row (1 + 4 = 5 votes)
+VOTE_CHECK_SHARE_ESTIMATE = 0.2  # share of rows expected to be re-checked (cost estimate only)
+SCORE_OUTPUT_TOKENS_PER_ROW = 3  # the extra "|85" on each reply line
+# Raw confidence -> calibrated confidence; values in between are interpolated. Set from
+# scripts/calibrate_claude_confidence.py (hand-checked answers); identity until then.
+CLAUDE_CONFIDENCE_CALIBRATION = [(0.5, 0.5), (1.0, 1.0)]
 
 # --- Batching and speed ------------------------------------------------------
 BATCH_SIZE = 10            # max rows per request; >20 lets answers drift between items (tested)

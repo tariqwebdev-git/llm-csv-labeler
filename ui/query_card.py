@@ -6,7 +6,7 @@ from labeler import config
 from labeler.errors import ApiConfigError, ApiKeyError
 from labeler.labeling_engine import estimate_cost, pick_test_rows, run_keyword_query, run_query
 from labeler.models import CostEstimate, Provider, Query, QueryKind
-from labeler.provider_settings import has_confidence
+from labeler.provider_settings import uses_logprobs
 from ui.answer_table import READ_HINT, show_table
 from ui.query_actions import delete_query, record_run, record_test, update_query_text
 from ui.result_tables import full_preview, split_test_rows
@@ -95,7 +95,7 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
                              state.cache_version, state.provider, test_texts)
         full_est = _estimate(state.file_id, state.text_column, query.text,
                              state.cache_version, state.provider, column.tolist())
-        no_conf = "" if has_confidence(state.provider) else " · Claude: labels without a confidence score for now"
+        no_conf = "" if uses_logprobs(state.provider) else " · Claude: confidence from its own rating plus re-checks of unsure rows"
         # "\$" stops Streamlit reading the text between two $ signs as a maths formula.
         st.caption(f"Estimate: test \\${test_est.cost_usd:.4f} for {test_est.rows_total} rows · "
                    f"full run \\${full_est.cost_usd:.4f} for {full_est.rows_total:,} rows "

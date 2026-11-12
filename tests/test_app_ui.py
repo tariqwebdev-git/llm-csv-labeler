@@ -310,6 +310,6 @@ def test_provider_choice_switches_key_status_and_runs_with_it(make_app, monkeypa
     at.radio(key="provider_choice").set_value(Provider.ANTHROPIC).run()
     assert _state(at).provider == Provider.ANTHROPIC
     assert any("Claude key" in m.value for m in at.markdown)
-    assert any("without a confidence score" in c.value for c in at.caption)
+    assert any("re-checks of unsure rows" in c.value for c in at.caption)
     _click(at, "test")
     assert seen["provider"] == Provider.ANTHROPIC

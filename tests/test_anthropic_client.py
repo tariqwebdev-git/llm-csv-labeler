@@ -44,11 +44,13 @@ def _run(classifier, tmp_path, texts=("a car hit me",)):
                      cache_path=tmp_path / "c.db")
 
 
-def test_labels_come_back_without_confidence(tmp_path):
-    classifier, calls = _classifier([httpx2.Response(200, json=_message("1|1"))])
+def test_label_and_stated_certainty_become_confidence(tmp_path):
+    classifier, calls = _classifier([httpx2.Response(200, json=_message("1|1|95"))])
     result = _run(classifier, tmp_path)
-    assert result.labels[0].label == 1 and result.labels[0].confidence is None
+    assert result.labels[0].label == 1 and result.labels[0].confidence == 0.95
+    assert len(calls) == 1                                  # sure (>= 0.80): no re-check
     body = json.loads(calls[0].content)
+    assert "<50-100>" in body["system"][0]["text"]          # asks for its certainty
     assert body["model"] == "claude-haiku-5-5"
     assert "temperature" not in body                      # this model rejects sampling settings
     assert body["thinking"] == {"type": "disabled"}
@@ -56,7 +58,7 @@ def test_labels_come_back_without_confidence(tmp_path):
 
 
 def test_rate_limit_is_retried_then_labelled(tmp_path):
-    classifier, calls = _classifier([_error(429, "rate_limit_error"), httpx2.Response(200, json=_message("1|0"))])
+    classifier, calls = _classifier([_error(429, "rate_limit_error"), httpx2.Response(200, json=_message("1|0|95"))])
     result = _run(classifier, tmp_path)
     assert result.labels[0].label == 0 and len(calls) == 2
 
@@ -81,7 +83,7 @@ def test_refusal_leaves_row_blank_with_note(tmp_path):
 
 
 def test_cost_uses_claude_prices_and_cache_reads(tmp_path):
-    classifier, _ = _classifier([httpx2.Response(200, json=_message("1|1", cache_read=100))])
+    classifier, _ = _classifier([httpx2.Response(200, json=_message("1|1|95", cache_read=100))])
     usage = _run(classifier, tmp_path).stats.usage
     assert usage.input_tokens == 110 and usage.cached_input_tokens == 100
 
