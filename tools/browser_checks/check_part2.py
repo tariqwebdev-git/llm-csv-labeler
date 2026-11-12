@@ -86,16 +86,16 @@ with sync_playwright() as p:
     expected = sum(1 for t in data["transportation_open"] if t.strip() and pattern.search(t))
     check("keyword matches = regex count", f"{expected} of 220 matched" in kw_text, f"expected {expected}")
     check("keyword run is free", "Free keyword match" in kw_text)
+    check("match count in card header", f"car_truck_bus: {expected} matches" in kw_text)
 
-    # Sidebar filter for the keyword query
+    # Sidebar: the keyword query's rows, matches highlighted (no filter buttons by default)
     card(page, "car_truck_bus").locator('[class*="st-key-sidebar_"] button').first.dispatch_event("click")
     settle(page)
     side = text(page, '[data-testid="stSidebar"]')
     check("sidebar shows the query's rows", "rows of car_truck_bus" in side, side[:80])
-    page.locator('[data-testid="stSidebar"]').get_by_role("radio", name="Matched", exact=True).click()
-    settle(page)
-    side = text(page, '[data-testid="stSidebar"]')
-    check("sidebar Matched count", f"{expected} shown · {expected} of" in side, side[:160])
+    check("sidebar highlight only (no filter buttons)",
+          page.locator('[data-testid="stSidebar"]').get_by_role("radio").count() == 0)
+    check("sidebar count", f"212 shown · {expected} of 212 rows matched" in side, side[:160])
     page.screenshot(path=out / "p2_1_keyword_sidebar.png")
     page.locator('[data-testid="stSidebar"] .st-key-sidebar_clear button').first.click()
     settle(page)

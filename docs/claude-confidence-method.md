@@ -1,6 +1,9 @@
 # Claude confidence score: options and recommended method (internal)
 
-**Status (2026-11-12):** Claude labels work on `feature/part2`, with `_conf` blank. Alex paid for the Claude milestone, whose wording says "Claude's API does not return the token probabilities the confidence score is built on, so I would replace it with a different method". **The method below is the one to build next.** Code goes in `labeler/anthropic_client.py` (`AnthropicClassifier.classify`), plus a calibration table in `config.py`.
+**Status (2026-11-12): built on `dev`** (v1.1.0). Alex paid for the Claude milestone, whose wording says "Claude's API does not return the token probabilities the confidence score is built on, so I would replace it with a different method".
+- **Code:** the scored prompt is `prompt_builder.SCORED_SYSTEM_PROMPT`; the parser reads the optional `|score`; `labeling_engine._vote_check` re-asks doubtful rows; `confidence_check.py` combines the votes and calibrates.
+- **Settings:** `VOTE_CHECK_*` and `CLAUDE_CONFIDENCE_CALIBRATION` in `config.py`.
+- **Waiting on Alex's key:** the calibration table is identity until `scripts/calibrate_claude_confidence.py` runs.
 
 ## The problem
 With OpenAI, confidence comes from token logprobs: how likely the model thought "1" vs "0" was. Claude's API returns no logprobs, so we must measure certainty another way.

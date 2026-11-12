@@ -148,15 +148,10 @@ You don't need to install everything again. Your key, your saved results and the
 **What's new in this version**
 - **Keyword queries:** a second tab, **New Keyword Query**. Type words separated by commas (e.g. *car, truck, bus*); a row matches if it contains any of them. Free, instant, no API key needed.
 - **Each text column has its own queries and results.** Switch columns and back, and nothing is lost.
-- **See one query's rows in the sidebar:** click the sidebar icon on a card. Matched rows are green, with a filter (All / Matched / Not matched / Not labelled).
-- **Claude as an option:** add `ANTHROPIC_API_KEY=` with your Claude key to `.env` (open it with `open -e .env`), restart, then pick **Claude** in the gear menu. Claude gives labels without a confidence score for now.
-- The query list is now the main part of the page.
-- Upload, the text column and the box for a new query stay at the top. Your API key status and what the session has cost sit small in the top right; the gear icon next to them has **Clear cache**.
-- **Save queries**, **Load queries** and **Download CSV** are small buttons at the bottom of the window. Only the query cards scroll between the two.
-- Click the arrow next to a card's name to collapse it to one line.
-- The sidebar lists every answer in the chosen text column, so you can keep reading while you write queries.
-- Long answers wrap in every table. Double-click a cell to read the whole answer.
-- In the download, each query's new columns sit right after the text column.
+- **See one query's rows in the sidebar:** click the sidebar icon on a card; its matched rows are highlighted in green.
+- **Number of matches on each card**, also when it's collapsed (e.g. *traffic_accidents: 45 matches*).
+- **White cells in the sidebar**, for easier reading.
+- **Claude as an option:** add `ANTHROPIC_API_KEY=` with your Claude key to `.env` (open it with `open -e .env`), restart, then pick **Claude** in the gear menu. Claude's confidence comes from its own rating plus re-checks of the rows it's unsure about.
 
 **How to update**
 1. Stop the app: click the Terminal window and press **Ctrl+C**.

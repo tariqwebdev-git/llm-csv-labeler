@@ -6,7 +6,7 @@ Last updated: 2026-11-12
 
 ## Where we are
 - **Alex tested v1.0.2 and is happy** ("looks terrific"). He **activated Milestone 2 "Four additional features" ($400)**: Claude option, highlight/filter a query's rows in the sidebar, a workspace per column, keyword queries. That's exactly Part 2, already built on `feature/part2`.
-- **Next: plan and build the next version (v1.1.0)** (plan mode first): merge `feature/part2`, the 2 small requests, highlight-first sidebar, the Claude confidence method (`docs/claude-confidence-method.md`). Details in the next-steps section below.
+- **v1.1.0 is built on `dev`** (2026-11-12): Part 2 merged, white sidebar cells, highlight-only sidebar, match count on cards, Claude confidence (stated score + vote check + calibration). 128 tests, browser checks pass. **Not released: waiting for Alex's Claude key** to calibrate the confidence and run a live check (Tariq's decision).
 - **People:** Asad (senior) has left. The new senior is new to the project and forwards client messages directly; Tariq writes the replies. Don't mention any senior in client messages.
 
 | Date | What happened |
@@ -28,6 +28,7 @@ Last updated: 2026-11-12
 | 2026-11-12 | **Alex activated Milestone 2 "Four additional features", $400** (Claude $140, sidebar filter/highlight $70, workspace per column $105, keyword queries $105). For the sidebar: **highlight first**; he asked if switching to filter later is easy (yes; we already have both). Still interested in the **hosting quote**. |
 | 2026-11-12 | **Reply sent to Alex** (by Tariq): starting the four features; the 2 small changes come in the same version; highlight first, filter is an easy switch; **asked for a Claude API key** (console.anthropic.com, low spend limit, delete after); **hosting quote** (see Decisions). Waiting for his answers. |
 | 2026-11-12 | Asad has left the company; the new senior is new to the project. |
+| 2026-11-12 | **v1.1.0 built on `dev`** (plan approved by Tariq: highlight only, release waits for the Claude key). Details: `docs/milestone-3/post-development.md` (v1.1.0 section). |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -42,13 +43,11 @@ Last updated: 2026-11-12
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-1. **Plan the next version, v1.1.0 (plan mode, Tariq approves):**
-   - merge `feature/part2` into `dev` (now approved and paid)
-   - white answer cells in the sidebar
-   - match count on each card, also collapsed ("traffic_accidents: 45 matches")
-   - highlight first in the sidebar (matched rows highlighted; keep the filter as an option)
-   - the Claude confidence method (`docs/claude-confidence-method.md`)
-   - tests, browser checks (`tools/browser_checks/`), docs, "What's new" in INSTALL-MAC, release and zip
+1. **When Alex's Claude key arrives** (put it only in `.env` as `ANTHROPIC_API_KEY=`):
+   - live check: `python scripts/run_labeling_cli.py --csv sample_data/sample.csv --column transportation_open --query "Mentions a person getting hit by a car or other vehicle (near misses count)" --limit 20 --provider anthropic`
+   - `python scripts/calibrate_claude_confidence.py`, then paste its table into `config.CLAUDE_CONFIDENCE_CALIBRATION`
+   - compare with `python scripts/run_eval.py --provider anthropic` vs OpenAI
+   - then **release v1.1.0** (How to release a zip; also check `tools/` is left out of the zip, and that the clean install pulls `anthropic`), take 3 screenshots, and send Alex the zip only
 2. **Waiting for Alex:**
    - a **Claude API key**. It goes only in `.env` as `ANTHROPIC_API_KEY=`, never in chat or a committed file. Needed for the live Claude check and confidence calibration.
    - **hosting answers:** how many users, and a shared API key with a cap or each their own

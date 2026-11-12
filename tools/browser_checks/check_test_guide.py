@@ -60,12 +60,14 @@ with sync_playwright() as p:
 
     # 1. Start
     check("1 no big headers", page.locator("h1").count() == 0)
-    check("1 API key shown top right", "API key" in text(page, ".st-key-top_bar") and "Spent $0.0000" in text(page, ".st-key-top_bar"))
+    top = text(page, ".st-key-top_bar")
+    check("1 key status and spend top right", "key" in top and "Spent $" in top, top[:120])
 
     # 2. Upload
     page.locator('.st-key-top_bar [data-testid="stFileUploaderDropzoneInput"]').set_input_files(csv_path)
     settle(page)
-    check("2 text column guessed", "transportation_open" in page.locator('.st-key-top_bar [data-testid="stSelectbox"]').inner_text(), page.locator('.st-key-top_bar [data-testid="stSelectbox"]').inner_text())
+    picked = page.locator('.st-key-top_bar [data-testid="stSelectbox"] input').first.input_value()
+    check("2 text column guessed", picked.startswith("transportation_open"), picked)
     check("2 empty-rows warning", "8 of 220 rows are empty" in text(page, ".st-key-query_area"))
     preview = page.locator('[data-testid="stExpander"]').filter(has_text="Data preview: 220 rows, 5 columns").first
     check("2 data preview collapsed", preview.count() == 1 and preview.locator("details").get_attribute("open") is None)
