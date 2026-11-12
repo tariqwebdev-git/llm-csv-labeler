@@ -3,7 +3,7 @@
 ## What this is
 A local Streamlit app for Alex Loewi (Upwork client). He uploads a CSV, picks a text column and writes plain-English yes/no queries. Each query adds `<name>` (1/0/blank), `<name>_conf` (0.50–1.00) and `<name>_note` (empty, trimmed, refused, blocked, failed) columns. Labels come from OpenAI in batches, and confidence comes from token logprobs.
 
-- Developer: Tariq Saleem. Senior: Asad. Plan: `LLM CSV Labeler Development Plan Final.pdf` (Nov 4, 2026).
+- Developer: Tariq Saleem. Senior: Asad until Nov 2026; he left, and the new senior is new to the project and forwards client messages, so Tariq writes the client replies. Plan: `LLM CSV Labeler Development Plan Final.pdf` (Nov 4, 2026).
 - Alex is on macOS Tahoe with conda always active; his install guide is `INSTALL-MAC.md` (macOS steps only).
 - Main test case: the query "Mentions a person getting hit by a car or other vehicle" on the `transportation_open` column. **Near misses ("a car almost hit my son") count as 1.**
 
@@ -17,6 +17,7 @@ python sample_data/make_sample.py                                      # regener
 python sample_data/make_stress_sample.py && python scripts/run_stress_test.py   # 5k-row stress test (~$0.19, capped by --max-spend)
 python scripts/run_eval.py [--model gpt-4o-mini]                             # accuracy of 4 queries vs hand keys (~$0.005)
 ```
+Browser checks (Playwright + Edge, separate venv, layout/scroll/end-to-end): see `tools/browser_checks/README.md`.
 
 ## Architecture (full detail: docs/architecture.md)
 - `app.py` + `ui/`: Streamlit only. They never call OpenAI, SQLite or the file system directly. They call `labeler.labeling_engine`.
@@ -54,7 +55,7 @@ python scripts/run_eval.py [--model gpt-4o-mini]                             # a
 Query cards are the main focus; top and bottom bars stay fixed: the page is one window high and only the `query_area` container scrolls (flex layout in `ui/page_style.css`, selectors only `.st-key-*` / `data-testid`; sticky positioning was tried and was unreliable; **never put a "<" in that CSS**, Streamlit then drops the whole style block). `app.py` (layout only) + `ui/`: `ui_models.py` (AppState, QueryRun types), `session.py` (get_state), `page_style.py` (+ `.css`), `upload_section.py` (top bar: file + text column), `session_info.py` (top right: key status, spend, Settings with Clear cache; warnings), `query_form_section.py` (top bar: one-line add form), `data_preview_section.py` (collapsed preview + empty-row warnings), `query_actions.py` (state rules: add/edit/delete/record, no drawing), `result_tables.py` (preview order, test split), `answer_table.py` (all answer tables: wrapped rows, double-click for full text), `query_list_section.py` (cards), `query_card.py` (one collapsible card: Edit/Test/Run/Delete), `query_file_section.py` (bottom bar: save/load JSON), `download_section.py` (bottom bar; new columns go right after the text column), `reading_list_sidebar.py` (sidebar: non-empty answers of the chosen column). UI tests: `tests/test_app_ui.py` (AppTest + fake model). Browser checks: Playwright with Edge (`channel="msedge"`) in a scratch venv, not in requirements.
 
 ## Part 2 (add-ons) branch
-Built in house on **`feature/part2`** (sub-branches `feature/part2-*` merge into it). Alex said not to start yet; Asad said build in house. **Do not merge `feature/part2` into `dev` until the client agrees.** Keep it current by merging `dev` into it. Plan/build notes: `docs/milestone-3/`.
+Built in house on **`feature/part2`**: Claude option (labels only so far), sidebar filter/highlight per query, a workspace per column, keyword queries. **Alex approved and paid it on 2026-11-12** (Milestone 2, "Four additional features", $400). It's merged into `dev` as part of the v1.1.0 plan, together with his 2 small requests and the Claude confidence method (`docs/claude-confidence-method.md`). Build notes: `docs/milestone-3/` on that branch.
 
 ## Status
 **Read `docs/project-status.md` at the start of every session** (handover log, what Alex has, what we are waiting on, how to release a zip). Update it when anything is sent to Alex or decided. Build history: `docs/milestone-*/post-development.md`; acceptance: `docs/acceptance-checklist.md` (✅ done, ⏳ needs Alex).
