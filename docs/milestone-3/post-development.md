@@ -67,3 +67,36 @@
 2. Alex confirms whole-word matching (the default stays on).
 3. The Claude confidence method, agreed with the client, then built in `anthropic_client.py`, calibrated with `scripts/run_eval.py --provider anthropic`.
 4. A live Claude check once a key is available.
+
+## v1.1.0 (2026-11-12): Part 2 merged + Alex's small requests + Claude confidence
+Alex approved Part 2 (Milestone 2, $400). `feature/part2` was merged into `dev`, then:
+
+**Alex's requests**
+- **White answer cells in the sidebar:** `answer_table.white_cells()` (pandas Styler: white background, dark text; matched rows `#d9f2e1`). Measured in the browser: the cells are pure white (255,255,255) against the grey sidebar (240,242,246).
+- **Highlight first:** the query view shows all rows with matches green; `SIDEBAR_FILTER_BUTTONS = False` (True brings back the filter buttons).
+- **Match count on cards, also collapsed:** `query_card._match_count`, e.g. "car_truck_bus: 78 matches", or "2 of 20 test rows matched" after a test.
+
+**Claude confidence** (method: `docs/claude-confidence-method.md`)
+- **Scored prompt:** `SCORED_SYSTEM_PROMPT` asks for `<id>|<0 or 1>|<50-100>` with anchors, and the batch-prompt reminder matches. **OpenAI's system and batch prompts are byte-identical to before** (checked), so its cache stays valid.
+- **Parser:** optional `|score`, clamped to 50-100. Logprob tokens win when present.
+- **`confidence_check.py`:**
+  - `is_doubtful` (< `VOTE_CHECK_BELOW` 0.80)
+  - `combine_votes`: majority, a tie keeps the first answer, failed/refused re-checks ignored (never guess); raw = (vote share + mean certainty of the agreeing votes) / 2
+  - `calibrate` (piecewise-linear `CLAUDE_CONFIDENCE_CALIBRATION`)
+  - `finalize` for rows that weren't re-checked
+- **Engine:**
+  - `_vote_check` runs `VOTE_CHECK_ROUNDS` (4) extra passes over the doubtful rows, each shuffled (seeded)
+  - the cache saves confident rows right away and doubtful rows after combining
+  - usage and requests include the re-checks
+  - the cache keys use the provider's prompt
+- **Estimate:** × (1 + 0.2 × 4) = 1.8 for Claude (`VOTE_CHECK_SHARE_ESTIMATE`), plus 3 output tokens per row for the score.
+- **Calibration:** `scripts/calibrate_claude_confidence.py` (the 4 `run_eval` cases on `sample.csv`, accuracy per band, prints the table). It exits cleanly without a key.
+
+**Tests:** 128 pass. New ones cover the parser score, vote combining, calibration, only doubtful rows re-checked and shuffled, cache and free re-run, flip-flop → low confidence, OpenAI unchanged, the estimate including re-checks, white cells, the header count, highlight-only, and the filter setting.
+
+**Browser:** `check_test_guide` 29/29, `check_part2` 16/16 (now checks highlight-only and the header count), scrolling holds. The two outdated checks in `check_test_guide` were fixed: the key label is now provider-specific, and the selectbox value is read from its input.
+
+**Pending before release:**
+1. Alex's Claude key → live 20-row check.
+2. `calibrate_claude_confidence.py` → paste the table into config; check that the wrong labels gather at low confidence.
+3. Release v1.1.0 per `project-status.md`.

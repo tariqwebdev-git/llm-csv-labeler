@@ -63,7 +63,8 @@ llm-csv-labeler/
 │   ├── python_version_check.py   # stops the app with a clear message on Python older than 3.12
 │   ├── prompt_builder.py         # system prompt, batch prompt, text sanitising
 │   ├── openai_client.py          # the only OpenAI caller (labels + logprob confidence)
-│   ├── anthropic_client.py       # the only Anthropic (Claude) caller; labels only, confidence method to be agreed
+│   ├── anthropic_client.py       # the only Anthropic (Claude) caller (sends the scored prompt)
+│   ├── confidence_check.py       # Claude confidence: stated certainty, vote check on doubtful rows, calibration
 │   ├── classifier_factory.py     # make_classifier(provider): OpenAI or Claude
 │   ├── provider_settings.py      # per-provider model, prices, key name (from config.py)
 │   ├── keyword_matcher.py        # keyword queries: case-insensitive, whole words optional, no API

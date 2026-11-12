@@ -42,8 +42,8 @@ The top bar stays in view: the file and text column on the left, the API key sta
    A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
 4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost. If the results look wrong, click **Edit**, reword the query and test again.
 5. **Run** labels every row. A progress bar shows the batches. The card then shows "X of Y matched, Z not labelled".
-6. **Add more queries** as needed. Each one gets its own card and its own columns. Click the arrow next to a card's name to collapse it to one line.
-7. **See a query's rows in the sidebar:** click the sidebar icon on the right of a card (after a Test or Run). The sidebar then lists that query's rows with its label and confidence, matched rows in green, and a filter: All, Matched, Not matched, Not labelled. Click × to go back to all answers.
+6. **Add more queries** as needed. Each one gets its own card and its own columns. The card header shows the number of matches (e.g. *traffic_accidents: 45 matches*), also when the card is collapsed: click the arrow next to its name to collapse it to one line.
+7. **See a query's rows in the sidebar:** click the sidebar icon on the right of a card (after a Test or Run). The sidebar then lists that query's rows with its label and confidence, with the matched rows highlighted in green. Click × to go back to all answers. (To get filter buttons instead, All / Matched / Not matched / Not labelled, set `SIDEBAR_FILTER_BUTTONS = True` in `labeler/config.py`.) Answers in the sidebar sit on white cells, for easy reading.
 8. **Download CSV** gives the original file with 3 columns per finished query. Each query's columns sit right after the text column it was run on, including queries on other columns.
 9. **Save queries** (`.json`) saves the queries of the current column, to reuse them on a new CSV; **Load queries** brings them back into the current column. Loaded queries never run by themselves.
 
@@ -55,7 +55,12 @@ Each card shows the estimated cost of a test and of a full run before you click.
 1. Add a line with your Claude key to `.env`: `ANTHROPIC_API_KEY=sk-ant-...` (open it with `open -e .env`), then restart the app.
 2. Click the **gear icon** (top right) and choose **Claude**. The key status shows which AI is in use.
 
-Claude labels the rows the same way, but **without a confidence score for now** (the `_conf` column stays blank): Claude doesn't give the probabilities the score is built from. Each AI keeps its own saved results, so switching back and forth never mixes them. Keyword queries don't use either AI.
+Claude labels the rows the same way. **Its confidence score is built differently**, because Claude doesn't give the probabilities OpenAI's score comes from:
+- Claude rates how sure it is for every row (50 to 100).
+- Rows it's unsure about (under 80) are asked again 4 more times; the majority answer wins, and the score reflects how many answers agreed.
+- The scores are tuned against hand-checked answers, so a low score points to the rows worth checking.
+
+This costs about 1.5 to 2 times a single pass (still cents per 1,000 rows); the card's estimate includes it. Each AI keeps its own saved results, so switching back and forth never mixes them. Keyword queries don't use either AI.
 
 ### Output columns (per query, e.g. `kids`)
 | Column | Values | Meaning |
@@ -86,6 +91,9 @@ About **13 seconds and $0.009 per 1,000 short answers**. Re-running an unchanged
 |---|---|---|
 | `PROVIDER` / `ANTHROPIC_MODEL` | `"openai"` / `claude-haiku-5-5` | You want the app to start with Claude (`"anthropic"`), or Anthropic retires the model (update the 3 `ANTHROPIC_PRICE_*` values too). The gear icon switches provider while the app runs |
 | `KEYWORD_WHOLE_WORDS_DEFAULT` | `True` | You want new keyword queries to match inside longer words by default |
+| `SIDEBAR_FILTER_BUTTONS` | `False` | You prefer filter buttons (All / Matched / Not matched / Not labelled) over highlighting in the sidebar |
+| `VOTE_CHECK_BELOW` / `VOTE_CHECK_ROUNDS` | `0.80` / `4` | Claude only: which rows are re-checked and how many extra times. Higher or more costs more |
+| `CLAUDE_CONFIDENCE_CALIBRATION` | from `scripts/calibrate_claude_confidence.py` | Re-run that script after changing `ANTHROPIC_MODEL` and paste its table here |
 | `MODEL` / `REASONING_EFFORT` | `gpt-6-luna` / `"none"` | OpenAI retires a model. Pick a current one from OpenAI's deprecations page and update the 3 `PRICE_*` values. Older chat models (e.g. `gpt-4o-mini`) need `REASONING_EFFORT = None`; newer reasoning models need `"none"` (otherwise there's no confidence score). Run `python scripts/run_eval.py --model <name>` to compare accuracy first |
 | `BATCH_SIZE` | 10 | Keep it at 20 or less. Bigger batches make answers drift between rows |
 | `MAX_BATCH_ITEM_TOKENS` | 1000 | Long texts are batched by length so they stay accurate |
