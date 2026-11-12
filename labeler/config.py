@@ -52,6 +52,8 @@ TABLE_TEXT_WIDTH_PX = 480  # starting width of the answer column in the main tab
 READING_LIST_TEXT_WIDTH_PX = 220  # same in the sidebar list (stretches to the sidebar's width)
 READING_LIST_MAX_ROWS = 5000  # most answers listed in the sidebar
 READING_LIST_HEIGHT_PX = 650  # height of the sidebar list; it scrolls inside
+SIDEBAR_FILTER_BUTTONS = False  # a query's rows in the sidebar: matches highlighted; True adds
+                                # All / Matched / Not matched / Not labelled buttons
 
 # --- Python ------------------------------------------------------------------
 MIN_PYTHON = (3, 12)       # the pinned packages (numpy 2.5) need Python 3.12 or newer

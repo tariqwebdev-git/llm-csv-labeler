@@ -1,22 +1,21 @@
 """Sidebar reading list: the answers in the chosen text column, to keep reading.
 
-Click the sidebar icon on a query card to see only that query's rows here
-(matched rows highlighted, with a filter). The × goes back to all answers.
+Click the sidebar icon on a query card to see that query's rows here, matched
+rows highlighted green (plus filter buttons if config.SIDEBAR_FILTER_BUTTONS).
+The × goes back to all answers. Cells are white with dark text, for reading.
 """
-import pandas as pd
 import streamlit as st
 
 from labeler import config
 from labeler.column_utils import non_empty_answers
 from labeler.models import Query
-from ui.answer_table import READ_HINT, show_table
+from ui.answer_table import READ_HINT, show_table, white_cells
 from ui.query_actions import find_query
 from ui.result_tables import filter_rows, query_rows
 from ui.ui_models import AppState, QueryRun
 
 FILTERS = {"All": "all", "Matched": "matched", "Not matched": "not_matched", "Not labelled": "not_labelled"}
 _FILTER_KEY = "sidebar_filter"
-_MATCH_HIGHLIGHT = "background-color: rgba(33, 195, 84, 0.15)"   # light green, readable in light and dark
 
 
 def render(state: AppState) -> None:
@@ -46,7 +45,7 @@ def _all_answers(state: AppState) -> None:
     more = f" (first {len(shown):,} shown)" if len(shown) < len(answers) else ""
     st.markdown(f"**{state.text_column}** · {len(answers):,} answers{more}")
     st.caption(f"{READ_HINT} Click the sidebar icon on a query card to see only its rows.")
-    show_table(shown.to_frame(), state.text_column, height=config.READING_LIST_HEIGHT_PX,
+    show_table(white_cells(shown.to_frame()), state.text_column, height=config.READING_LIST_HEIGHT_PX,
                text_width=config.READING_LIST_TEXT_WIDTH_PX)
 
 
@@ -57,19 +56,14 @@ def _query_view(state: AppState, query: Query, run: QueryRun) -> None:
         state.sidebar_query_id = None
         st.rerun()
     table = query_rows(state.df, state.text_column, query.name, run.result.labels, run.row_indices)
-    choice = st.segmented_control("Show", list(FILTERS), default="All", key=_FILTER_KEY,
-                                  label_visibility="collapsed") or "All"
+    choice = "All"
+    if config.SIDEBAR_FILTER_BUTTONS:
+        choice = st.segmented_control("Show", list(FILTERS), default="All", key=_FILTER_KEY,
+                                      label_visibility="collapsed") or "All"
     shown = filter_rows(table, query.name, FILTERS[choice]).head(config.READING_LIST_MAX_ROWS)
     source = "test rows" if run.row_indices is not None else "rows"
     matched = int((table[query.name] == "1").sum())
     st.caption(f"{len(shown):,} shown · {matched:,} of {len(table):,} {source} matched. "
                f"Matched rows are green. {READ_HINT}")
-    show_table(_highlight_matches(shown, query.name), state.text_column, height=config.READING_LIST_HEIGHT_PX,
-               text_width=config.READING_LIST_TEXT_WIDTH_PX)
-
-
-def _highlight_matches(table: pd.DataFrame, label_column: str):
-    """Colour the rows labelled 1 (pandas Styler, shown as-is by st.dataframe)."""
-    def row_style(row: pd.Series) -> list[str]:
-        return [_MATCH_HIGHLIGHT if row[label_column] == "1" else ""] * len(row)
-    return table.style.apply(row_style, axis=1)
+    show_table(white_cells(shown, match_column=query.name), state.text_column,
+               height=config.READING_LIST_HEIGHT_PX, text_width=config.READING_LIST_TEXT_WIDTH_PX)
