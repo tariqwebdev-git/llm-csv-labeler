@@ -15,18 +15,24 @@ def contains_hit(text: str) -> str:
 
 class FakeClassifier:
     def __init__(self, answer: Callable[[str], str | None] = contains_hit, error: Exception | None = None,
-                 confidence: float = 0.9):
+                 confidence: float = 0.9, score: Callable[[str], int] | None = None):
+        """score: answer like Claude, "<id>|<label>|<score>" lines with no logprob tokens."""
         self.answer = answer
         self.error = error
         self.confidence = confidence
+        self.score = score
         self.calls: list[list[str]] = []
+        self.system_prompts: list[str] = []
 
     async def classify(self, system_prompt: str, user_prompt: str, max_output_tokens: int) -> LLMReply:
         block = user_prompt.split(f"{ITEMS_OPEN}\n", 1)[1].rsplit(f"\n{ITEMS_CLOSE}", 1)[0]
         items = [line.split("|", 1)[1] for line in block.splitlines()]
         self.calls.append(items)
+        self.system_prompts.append(system_prompt)
         if self.error:
             raise self.error
+        if self.score is not None:
+            return self._scored_reply(items)
 
         tokens: list[TokenLogprob] = []
         for local_id, text in enumerate(items, start=1):
@@ -44,6 +50,16 @@ class FakeClassifier:
             ]
         content = "".join(t.token for t in tokens)
         return LLMReply(content=content, tokens=tokens, usage=TokenUsage(100, 0, len(tokens)))
+
+    def _scored_reply(self, items: list[str]) -> LLMReply:
+        lines = []
+        for local_id, text in enumerate(items, start=1):
+            answer = self.answer(text)
+            if answer == BLOCK:
+                return LLMReply(content="", tokens=[], usage=TokenUsage(), blocked=True)
+            if answer is not SKIP:
+                lines.append(f"{local_id}|{answer}|{self.score(text)}")
+        return LLMReply(content="\n".join(lines), tokens=[], usage=TokenUsage(100, 0, 5 * len(lines)))
 
     async def close(self) -> None:
         pass
