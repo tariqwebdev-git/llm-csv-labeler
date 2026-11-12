@@ -255,7 +255,12 @@ def test_keyword_edit_whole_words_marks_out_of_date(make_app):
     assert query.whole_words is False and query.status == QueryStatus.OUT_OF_DATE
 
 
-def test_sidebar_shows_a_querys_rows_with_filter(make_app):
+def _sidebar_rows(at):
+    shown = at.sidebar.dataframe[0].value
+    return shown.data if hasattr(shown, "data") else shown
+
+
+def test_sidebar_highlights_a_querys_rows_without_filter_by_default(make_app):
     at = _click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run")
     state = _state(at)
     query_id = state.queries[0].id
@@ -263,14 +268,31 @@ def test_sidebar_shows_a_querys_rows_with_filter(make_app):
     at = _click(at, "sidebar")
     assert _state(at).sidebar_query_id == query_id
     assert any("rows of **person_hit_vehicle**" in m.value for m in at.sidebar.markdown)
-    matched = state.full_runs[query_id].result.stats.matched
-    at.segmented_control(key="sidebar_filter").set_value("Matched").run()
-    shown = at.sidebar.dataframe[0].value
-    shown = shown.data if hasattr(shown, "data") else shown
-    assert len(shown) == matched and set(shown["person_hit_vehicle"]) == {"1"}
+    assert not [w for w in at.sidebar.get("button_group")]        # highlight only: no filter buttons
+    rows = _sidebar_rows(at)
+    assert len(rows) == 212 and (rows["person_hit_vehicle"] == "1").sum() == state.full_runs[query_id].result.stats.matched
     at = at.button(key="sidebar_clear").click().run()
     assert _state(at).sidebar_query_id is None
     assert any("212 answers" in m.value for m in at.sidebar.markdown)
+
+
+def test_sidebar_filter_buttons_when_enabled(make_app, monkeypatch):
+    monkeypatch.setattr("labeler.config.SIDEBAR_FILTER_BUTTONS", True)
+    at = _click(_click(_add(_upload(make_app()), "Mentions a person hit by a vehicle"), "run"), "sidebar")
+    matched = _state(at).full_runs[_state(at).queries[0].id].result.stats.matched
+    at.segmented_control(key="sidebar_filter").set_value("Matched").run()
+    rows = _sidebar_rows(at)
+    assert len(rows) == matched and set(rows["person_hit_vehicle"]) == {"1"}
+
+
+def test_card_header_shows_match_count_also_collapsed(make_app):
+    at = _add(_upload(make_app()), "Mentions a person hit by a vehicle")
+    at = _click(at, "test")
+    assert any("test rows matched" in m.value for m in at.markdown)
+    at = _click(at, "run")
+    matched = _state(at).full_runs[_state(at).queries[0].id].result.stats.matched
+    at = _click(at, "toggle")                                      # collapse the card
+    assert any(f"**person_hit_vehicle**: {matched} matches" in m.value for m in at.markdown)
 
 
 def test_sidebar_button_disabled_before_any_run(make_app):

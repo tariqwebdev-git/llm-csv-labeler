@@ -39,9 +39,22 @@ def _header(state: AppState, query: Query) -> bool:
         st.session_state[collapsed_key] = not collapsed
         st.rerun()
     tag = " &nbsp; :blue-badge[Keyword]" if _is_keyword(query) else ""
-    title.markdown(f"**{query.name}** &nbsp; :small[:gray[{query.status.value}]]{tag}")
+    title.markdown(f"**{query.name}**{_match_count(state, query)} &nbsp; "
+                   f":small[:gray[{query.status.value}]]{tag}")
     _sidebar_button(state, query, sidebar)
     return collapsed
+
+
+def _match_count(state: AppState, query: Query) -> str:
+    """': 45 matches' after a full run, ': 4 of 20 test rows matched' after a test, else ''."""
+    full = state.full_runs.get(query.id)
+    if full:
+        matched = full.result.stats.matched
+        return f": {matched:,} {'match' if matched == 1 else 'matches'}"
+    test = state.test_runs.get(query.id)
+    if test:
+        return f": {test.result.stats.matched} of {test.result.stats.rows_total} test rows matched"
+    return ""
 
 
 def _sidebar_button(state: AppState, query: Query, place) -> None:
