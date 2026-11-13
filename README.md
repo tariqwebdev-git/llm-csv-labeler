@@ -4,7 +4,7 @@ Upload a CSV, write plain-English yes/no queries, and download your file with th
 
 ## Setup (macOS)
 
-**New to Terminal? Follow [INSTALL-MAC.md](INSTALL-MAC.md)**: a step-by-step guide with what you should see at each step.
+**New to Terminal? Follow INSTALL-MAC.md** (the install guide sent with the zip): a step-by-step guide with what you should see at each step.
 
 Short version. [uv](https://docs.astral.sh/uv/) installs Python 3.12 and the packages, whatever Python your Mac has:
 ```bash
@@ -27,7 +27,7 @@ rm -rf ~/Downloads/llm-csv-labeler                      # tidy up, ready for nex
 uv pip install --python .venv -r requirements.txt       # only changed packages
 .venv/bin/python -m streamlit run app.py
 ```
-Step-by-step version, with what's new: [INSTALL-MAC.md](INSTALL-MAC.md#getting-a-new-version).
+Step-by-step version, with what's new: "Getting a new version" in INSTALL-MAC.md (sent with the zip).
 
 ## How to use
 
@@ -110,7 +110,7 @@ The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Cha
 | "API key missing" | Check that `.env` exists in the project folder and contains `OPENAI_API_KEY=sk-...`, then restart the app |
 | "OpenAI rejected the API key" | The key is wrong or was deleted. Create a new one in your OpenAI account |
 | Rows marked `failed` / rate-limit errors | Lower `MAX_CONCURRENT` in `config.py`, then Run again. Only failed rows are re-sent |
-| Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in [INSTALL-MAC.md](INSTALL-MAC.md#if-something-goes-wrong) |
+| Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in "If something goes wrong" in INSTALL-MAC.md |
 | An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `.venv/bin/python -m streamlit run app.py` again. A browser refresh isn't enough |
 | "This app needs Python 3.12 or newer" | The app was started with an older Python (for example conda's, or the Mac's own). Start it with `.venv/bin/python -m streamlit run app.py`. If `.venv` is missing, run the Setup commands again |
 | Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install --python .venv -r requirements.txt` again |
