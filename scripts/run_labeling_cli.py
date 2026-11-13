@@ -18,12 +18,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 import pandas as pd  # noqa: E402
 
+from labeler import config  # noqa: E402
 from labeler.api_key import load_api_key  # noqa: E402
 from labeler.column_utils import suggest_column_name  # noqa: E402
 from labeler.csv_io import labeled_filename, read_csv, to_csv_bytes  # noqa: E402
 from labeler.errors import LabelerError  # noqa: E402
 from labeler.labeling_engine import estimate_cost, run_query  # noqa: E402
-from labeler.models import RowLabel  # noqa: E402
+from labeler.models import Provider, RowLabel  # noqa: E402
+from labeler.provider_settings import model_for  # noqa: E402
 from labeler.output_builder import add_result_columns  # noqa: E402
 
 _TEXT_PREVIEW_CHARS = 90
@@ -41,7 +43,9 @@ def main() -> int:
             df = df.head(args.limit)
         texts = df[args.column].tolist()
 
-        estimate = estimate_cost(texts, args.query)
+        provider = Provider(args.provider)
+        print(f"Provider: {provider.value} | model: {model_for(provider)}")
+        estimate = estimate_cost(texts, args.query, provider=provider)
         print(f"Rows: {estimate.rows_total} | already cached: {estimate.rows_cached} | "
               f"unique texts to send: {estimate.texts_to_send}")
         print(f"Estimated cost: ${estimate.cost_usd:.4f} "
@@ -50,7 +54,7 @@ def main() -> int:
             return 0
 
         result = run_query(
-            texts, args.query, api_key=load_api_key(),
+            texts, args.query, api_key=load_api_key(provider), provider=provider,
             on_progress=lambda done, total: print(f"\rBatches {done}/{total}", end="", flush=True),
         )
         print()
@@ -80,7 +84,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, help="only the first N rows (keep test runs cheap)")
     parser.add_argument("--key", type=Path, help="answer key CSV for an accuracy check")
     parser.add_argument("--key-column", default="expected_hit_by_vehicle")
-    parser.add_argument("--estimate-only", action="store_true", help="show cost, do not call OpenAI")
+    parser.add_argument("--estimate-only", action="store_true", help="show cost, do not call the API")
+    parser.add_argument("--provider", choices=[p.value for p in Provider], default=config.PROVIDER,
+                        help="openai or anthropic (Claude: labels without a confidence score for now)")
     return parser.parse_args()
 
 

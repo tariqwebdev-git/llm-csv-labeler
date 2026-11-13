@@ -15,6 +15,31 @@ PRICE_INPUT_PER_1M = 0.10
 PRICE_CACHED_INPUT_PER_1M = 0.01
 PRICE_OUTPUT_PER_1M = 0.50
 
+# --- Claude (Anthropic), the second provider ---------------------------------
+# Pick the provider in the app (gear icon, top right); PROVIDER is the starting choice.
+# Claude returns no token probabilities, so its confidence comes from its own rating plus
+# re-checks of unsure rows (see below). Prices: Anthropic pricing, checked 2026-11-10
+# (rates for prompts up to 100K tokens; batches here are far smaller).
+PROVIDER = "openai"                 # "openai" or "anthropic"
+ANTHROPIC_MODEL = "claude-haiku-5-5"
+ANTHROPIC_PRICE_INPUT_PER_1M = 0.10
+ANTHROPIC_PRICE_CACHED_INPUT_PER_1M = 0.01
+ANTHROPIC_PRICE_OUTPUT_PER_1M = 0.50
+ANTHROPIC_API_KEY_ENV_VAR = "ANTHROPIC_API_KEY"
+
+# Confidence without token probabilities (Claude): each row gets the model's own 50-100
+# rating; rows rated below VOTE_CHECK_BELOW are asked again VOTE_CHECK_ROUNDS times and
+# the majority answer wins ("vote check"). Costs about 1.5-2x a single pass.
+VOTE_CHECK_BELOW = 0.80          # rows rated under this are re-checked
+VOTE_CHECK_ROUNDS = 4            # extra asks per doubtful row (1 + 4 = 5 votes)
+VOTE_CHECK_SHARE_ESTIMATE = 0.2  # share of rows expected to be re-checked (cost estimate only)
+SCORE_OUTPUT_TOKENS_PER_ROW = 3  # the extra "|85" on each reply line
+# Raw confidence -> calibrated confidence; values in between are interpolated. Kept as is
+# (raw scores) on 2026-11-13: on the sample data the raw scores already rank wrong labels
+# lowest, and too few rows were unsure to fit a reliable table. Re-run
+# scripts/calibrate_claude_confidence.py on a larger hand-checked file to change it.
+CLAUDE_CONFIDENCE_CALIBRATION = [(0.5, 0.5), (1.0, 1.0)]
+
 # --- Batching and speed ------------------------------------------------------
 BATCH_SIZE = 10            # max rows per request; >20 lets answers drift between items (tested)
 MAX_BATCH_ITEM_TOKENS = 1000  # max text tokens per request; keeps long texts in small
@@ -39,6 +64,8 @@ TABLE_TEXT_WIDTH_PX = 480  # starting width of the answer column in the main tab
 READING_LIST_TEXT_WIDTH_PX = 220  # same in the sidebar list (stretches to the sidebar's width)
 READING_LIST_MAX_ROWS = 5000  # most answers listed in the sidebar
 READING_LIST_HEIGHT_PX = 650  # height of the sidebar list; it scrolls inside
+SIDEBAR_FILTER_BUTTONS = False  # a query's rows in the sidebar: matches highlighted; True adds
+                                # All / Matched / Not matched / Not labelled buttons
 
 # --- Python ------------------------------------------------------------------
 MIN_PYTHON = (3, 12)       # the pinned packages (numpy 2.5) need Python 3.12 or newer
