@@ -34,8 +34,10 @@ VOTE_CHECK_BELOW = 0.80          # rows rated under this are re-checked
 VOTE_CHECK_ROUNDS = 4            # extra asks per doubtful row (1 + 4 = 5 votes)
 VOTE_CHECK_SHARE_ESTIMATE = 0.2  # share of rows expected to be re-checked (cost estimate only)
 SCORE_OUTPUT_TOKENS_PER_ROW = 3  # the extra "|85" on each reply line
-# Raw confidence -> calibrated confidence; values in between are interpolated. Set from
-# scripts/calibrate_claude_confidence.py (hand-checked answers); identity until then.
+# Raw confidence -> calibrated confidence; values in between are interpolated. Kept as is
+# (raw scores) on 2026-11-13: on the sample data the raw scores already rank wrong labels
+# lowest, and too few rows were unsure to fit a reliable table. Re-run
+# scripts/calibrate_claude_confidence.py on a larger hand-checked file to change it.
 CLAUDE_CONFIDENCE_CALIBRATION = [(0.5, 0.5), (1.0, 1.0)]
 
 # --- Batching and speed ------------------------------------------------------

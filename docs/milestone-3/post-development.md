@@ -100,3 +100,34 @@ Alex approved Part 2 (Milestone 2, $400). `feature/part2` was merged into `dev`,
 1. Alex's Claude key → live 20-row check.
 2. `calibrate_claude_confidence.py` → paste the table into config; check that the wrong labels gather at low confidence.
 3. Release v1.1.0 per `project-status.md`.
+
+## Keyword rules + live Claude check (2026-11-13)
+- **Keyword rules confirmed by Alex** (via the senior):
+  - whole words only, case-insensitive
+  - OR across words
+  - a `*` at the end means "starts with" (`respect*`)
+  - punctuation handled (`car.`, `car's`, curly apostrophe)
+  - keywords escaped (`c++`, `a.b`, `(x)` match literally)
+  - the whole-words checkbox and `Query.whole_words` / `KEYWORD_WHOLE_WORDS_DEFAULT` were removed
+- Tests: 130 pass.
+
+## Live results (2026-11-13, Alex's key, `claude-haiku-5-5`, total test spend about $0.012)
+Same 4 queries on `sample.csv` (220 rows, hand-checked key), `scripts/run_eval.py --provider ...`:
+
+| Query | Claude | OpenAI (gpt-6-luna) |
+|---|---|---|
+| Hit by a vehicle (near misses count) | 100% | 100% |
+| Bus/train complaints | 98.0% | 98.0% |
+| Does not mention any vehicle | 94.6% | 99.4% |
+| Insults/swearing | 100% | 100% |
+| Cost for 880 rows | $0.0059 | $0.0029 |
+
+- **Cost:** about $0.007 per 1,000 rows of this data for Claude vs $0.003 for OpenAI (about 2x; the sample has many duplicate texts, so all-unique data costs more for both).
+- **Confidence ranks errors low:** raw-score bands on 791 scored rows:
+  - 0.6–0.7: 4 rows, 0% right
+  - 0.7–0.8: 8 rows, 100% right
+  - 0.8–0.9: 90 rows, 96% right
+  - 0.9–1.0: 689 rows, 100% right
+  - 2 of Claude's 3 mistakes on the hardest query scored 0.61 and 0.75.
+- **Calibration table not applied:** with only 12 rows under 0.8, the fitted table mapped almost everything to 1.00, which would hide doubtful rows. The raw scores are kept (identity table). The script now refuses to suggest a table unless 3+ bands have 30+ rows each.
+- **Live 20-row CLI check:** 20/20 correct; the near miss was labelled 1 at 0.80; $0.0002.

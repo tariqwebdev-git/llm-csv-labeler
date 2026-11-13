@@ -58,9 +58,9 @@ Each card shows the estimated cost of a test and of a full run before you click.
 Claude labels the rows the same way. **Its confidence score is built differently**, because Claude doesn't give the probabilities OpenAI's score comes from:
 - Claude rates how sure it is for every row (50 to 100).
 - Rows it's unsure about (under 80) are asked again 4 more times; the majority answer wins, and the score reflects how many answers agreed.
-- The scores are tuned against hand-checked answers, so a low score points to the rows worth checking.
+- Checked against hand-checked answers: low scores point to the rows worth checking.
 
-This costs about 1.5 to 2 times a single pass (still cents per 1,000 rows); the card's estimate includes it. Each AI keeps its own saved results, so switching back and forth never mixes them. Keyword queries don't use either AI.
+Claude costs about twice as much as OpenAI here (still well under a cent per 1,000 short answers); the card's estimate includes the re-checks. Each AI keeps its own saved results, so switching back and forth never mixes them. Keyword queries don't use either AI.
 
 ### Output columns (per query, e.g. `kids`)
 | Column | Values | Meaning |

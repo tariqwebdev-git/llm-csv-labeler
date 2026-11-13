@@ -3,7 +3,7 @@
 **Status (2026-11-12): built on `dev`** (v1.1.0). Alex paid for the Claude milestone, whose wording says "Claude's API does not return the token probabilities the confidence score is built on, so I would replace it with a different method".
 - **Code:** the scored prompt is `prompt_builder.SCORED_SYSTEM_PROMPT`; the parser reads the optional `|score`; `labeling_engine._vote_check` re-asks doubtful rows; `confidence_check.py` combines the votes and calibrates.
 - **Settings:** `VOTE_CHECK_*` and `CLAUDE_CONFIDENCE_CALIBRATION` in `config.py`.
-- **Waiting on Alex's key:** the calibration table is identity until `scripts/calibrate_claude_confidence.py` runs.
+- **Checked live on 2026-11-13** (results below). The calibration table stays identity (raw scores): see why below.
 
 ## The problem
 With OpenAI, confidence comes from token logprobs: how likely the model thought "1" vs "0" was. Claude's API returns no logprobs, so we must measure certainty another way.
@@ -26,3 +26,24 @@ With OpenAI, confidence comes from token logprobs: how likely the model thought 
 
 ## For the client (plain words)
 "Claude doesn't expose probabilities, so we have it rate its own certainty and re-ask only the doubtful rows, then tune the scores against hand-checked answers. Cost stays close to a single pass, and low scores point to the rows worth checking."
+
+## Live results (2026-11-13, Alex's key, `claude-haiku-5-5`, total test spend about $0.012)
+Same 4 queries on `sample.csv` (220 rows, hand-checked key), `scripts/run_eval.py --provider ...`:
+
+| Query | Claude | OpenAI (gpt-6-luna) |
+|---|---|---|
+| Hit by a vehicle (near misses count) | 100% | 100% |
+| Bus/train complaints | 98.0% | 98.0% |
+| Does not mention any vehicle | 94.6% | 99.4% |
+| Insults/swearing | 100% | 100% |
+| Cost for 880 rows | $0.0059 | $0.0029 |
+
+- **Cost:** about $0.007 per 1,000 rows of this data for Claude vs $0.003 for OpenAI (about 2x; the sample has many duplicate texts, so all-unique data costs more for both).
+- **Confidence ranks errors low:** raw-score bands on 791 scored rows:
+  - 0.6–0.7: 4 rows, 0% right
+  - 0.7–0.8: 8 rows, 100% right
+  - 0.8–0.9: 90 rows, 96% right
+  - 0.9–1.0: 689 rows, 100% right
+  - 2 of Claude's 3 mistakes on the hardest query scored 0.61 and 0.75.
+- **Calibration table not applied:** with only 12 rows under 0.8, the fitted table mapped almost everything to 1.00, which would hide doubtful rows. The raw scores are kept (identity table). The script now refuses to suggest a table unless 3+ bands have 30+ rows each.
+- **Live 20-row CLI check:** 20/20 correct; the near miss was labelled 1 at 0.80; $0.0002.
