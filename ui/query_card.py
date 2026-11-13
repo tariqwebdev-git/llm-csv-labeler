@@ -78,8 +78,8 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
     if editing:
         _editor(state, query)
     elif keyword:
-        match = "whole words only" if query.whole_words else "also inside longer words"
-        st.write(f"Rows containing any of: **{query.text}** :small[:gray[({match}, upper/lower case ignored)]]")
+        st.write(f"Rows containing any of: **{query.text}** "
+                 ":small[:gray[(whole words, upper/lower case ignored; * at the end matches word starts)]]")
     else:
         st.write(query.text)
 
@@ -124,16 +124,14 @@ def _is_keyword(query: Query) -> bool:
 
 
 def _editor(state: AppState, query: Query) -> None:
-    whole_words = None
     if _is_keyword(query):
-        new_text = st.text_input("Edit words (separated by commas)", value=query.text, key=_key("edit_text", query))
-        whole_words = st.checkbox("Whole words only", value=query.whole_words, key=_key("edit_whole", query),
-                                  help="On: 'car' does not match 'scar'. Off: it also matches inside longer words.")
+        new_text = st.text_input("Edit words (separated by commas; * at the end matches word starts)",
+                                 value=query.text, key=_key("edit_text", query))
     else:
         new_text = st.text_area("Edit query", value=query.text, key=_key("edit_text", query))
     save, cancel = st.columns(2)
     if save.button("Save", key=_key("save", query), type="primary"):
-        update_query_text(state, query.id, new_text, whole_words)
+        update_query_text(state, query.id, new_text)
         st.session_state[_key("editing", query)] = False
         st.rerun()
     if cancel.button("Cancel", key=_key("cancel", query)):
@@ -185,7 +183,7 @@ def _run(state: AppState, query: Query, api_key: str, test_only: bool) -> None:
     indices = pick_test_rows(len(column)) if test_only else None
     texts = column.iloc[indices].tolist() if test_only else column.tolist()
     if _is_keyword(query):
-        result = run_keyword_query(texts, query.text, query.whole_words)
+        result = run_keyword_query(texts, query.text)
         run = QueryRun(result=result, query_text=query.text, row_indices=indices)
         (record_test if test_only else record_run)(state, query, run)
         st.rerun()

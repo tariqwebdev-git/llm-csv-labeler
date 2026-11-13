@@ -52,7 +52,6 @@ MAX_ROW_CHARS = 2000       # longer text is trimmed and noted "trimmed"
 SOFT_ROW_LIMIT = 10_000    # warn above this many rows
 EMPTY_WARNING_SHARE = 0.20 # strong warning if more than this share of rows is empty
 QUERY_MIN_WORDS = 3        # warn when a query is shorter (short queries are often misread)
-KEYWORD_WHOLE_WORDS_DEFAULT = True  # keyword queries: 'car' does not match 'scar' (a checkbox per query)
 
 # --- Interface ---------------------------------------------------------------
 PREVIEW_ROWS = 10          # rows shown in the "Data preview" section

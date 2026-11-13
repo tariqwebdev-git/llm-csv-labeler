@@ -9,12 +9,12 @@ from ui.ui_models import AppState
 
 QUERY_PLACEHOLDER = ("New query: write a full sentence describing what counts, e.g. 'Mentions a person "
                      "getting hit by a car or other vehicle (near misses count)'")
-KEYWORD_PLACEHOLDER = "Words to look for, separated by commas, e.g. car, truck, bus, hit by"
+KEYWORD_PLACEHOLDER = ("Words to look for, separated by commas (whole words; * at the end matches word starts), "
+                       "e.g. car, truck, bus, respect*")
 _TEXT_KEY = "new_query_text"
 _NAME_KEY = "new_query_name"
 _KW_TEXT_KEY = "new_keyword_text"
 _KW_NAME_KEY = "new_keyword_name"
-_KW_WHOLE_KEY = "new_keyword_whole_words"
 
 
 def render(state: AppState) -> None:
@@ -40,15 +40,12 @@ def _llm_form(state: AppState) -> None:
 
 
 def _keyword_form(state: AppState) -> None:
-    text_col, name_col, whole_col, add_col = st.columns([5, 2, 2, 1], gap="small", vertical_alignment="center")
+    text_col, name_col, add_col = st.columns([6, 2, 1], gap="small", vertical_alignment="center")
     text = text_col.text_input("Keywords", key=_KW_TEXT_KEY, on_change=_suggest_name,
                                args=(_KW_TEXT_KEY, _KW_NAME_KEY), placeholder=KEYWORD_PLACEHOLDER,
                                label_visibility="collapsed").strip()
     name_col.text_input("Keyword column name", key=_KW_NAME_KEY, placeholder="column name",
                         label_visibility="collapsed", help="Name of the new columns in the download.")
-    whole_col.checkbox("Whole words only", key=_KW_WHOLE_KEY, value=config.KEYWORD_WHOLE_WORDS_DEFAULT,
-                       help="On: 'car' does not match 'scar'. Off: it also matches inside longer words. "
-                            "Upper/lower case is always ignored.")
     add_col.button("Add", key="add_keyword_query", on_click=_add_keyword, args=(state,), disabled=not text,
                    type="primary", width="stretch", icon=":material/add:", help="Add the keyword query as a card")
 
@@ -70,7 +67,6 @@ def _add_keyword(state: AppState) -> None:
     """Button callback: add the keyword query card and clear the form."""
     text = st.session_state.get(_KW_TEXT_KEY, "").strip()
     if text:
-        add_query(state, text, st.session_state.get(_KW_NAME_KEY, ""), kind=QueryKind.KEYWORD,
-                  whole_words=st.session_state.get(_KW_WHOLE_KEY, config.KEYWORD_WHOLE_WORDS_DEFAULT))
+        add_query(state, text, st.session_state.get(_KW_NAME_KEY, ""), kind=QueryKind.KEYWORD)
         st.session_state[_KW_TEXT_KEY] = ""
         st.session_state[_KW_NAME_KEY] = ""

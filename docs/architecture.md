@@ -67,7 +67,7 @@ llm-csv-labeler/
 │   ├── confidence_check.py       # Claude confidence: stated certainty, vote check on doubtful rows, calibration
 │   ├── classifier_factory.py     # make_classifier(provider): OpenAI or Claude
 │   ├── provider_settings.py      # per-provider model, prices, key name (from config.py)
-│   ├── keyword_matcher.py        # keyword queries: case-insensitive, whole words optional, no API
+│   ├── keyword_matcher.py        # keyword queries: whole words, case-insensitive, * = word starts, no API
 │   ├── response_parser.py        # reply lines + logprobs -> labels, confidence
 │   ├── row_preparer.py           # empty/trim checks, de-duplication
 │   ├── batch_planner.py          # groups rows into small batches (row count + token budget)

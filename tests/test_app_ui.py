@@ -218,10 +218,8 @@ def test_switching_column_keeps_each_columns_queries(make_app):
     assert columns.index("person_hit_vehicle") == columns.index("transportation_open") + 1
 
 
-def _add_keyword(at: AppTest, words: str, whole_words: bool = True) -> AppTest:
+def _add_keyword(at: AppTest, words: str) -> AppTest:
     at.text_input(key="new_keyword_text").input(words).run()
-    if not whole_words:
-        at.checkbox(key="new_keyword_whole_words").uncheck().run()
     return at.button(key="add_keyword_query").click().run()
 
 
@@ -245,14 +243,15 @@ def test_keyword_query_runs_without_api_key_and_is_free(make_app):
     assert set(table["car_truck_bus_conf"]) <= {"1.00", ""}
 
 
-def test_keyword_edit_whole_words_marks_out_of_date(make_app):
+def test_keyword_edit_marks_out_of_date_and_has_no_checkbox(make_app):
     at = _click(_add_keyword(_upload(make_app()), "car"), "run")
+    assert not at.checkbox                                         # whole words only: no option
     query_id = _state(at).queries[0].id
     at = _click(at, "edit")
-    at.checkbox(key=f"edit_whole_{query_id}").uncheck().run()
+    at.text_input(key=f"edit_text_{query_id}").input("car, truck*").run()
     at = at.button(key=f"save_{query_id}").click().run()
     query = _state(at).queries[0]
-    assert query.whole_words is False and query.status == QueryStatus.OUT_OF_DATE
+    assert query.text == "car, truck*" and query.status == QueryStatus.OUT_OF_DATE
 
 
 def _sidebar_rows(at):

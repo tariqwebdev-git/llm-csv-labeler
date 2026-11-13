@@ -37,7 +37,7 @@ The top bar stays in view: the file and text column on the left, the API key sta
 2. **Choose the text column** next to the file. The column with the longest text is picked automatically. If many rows in that column are empty, a warning names a better column. The **sidebar** lists every non-empty answer in that column, so you can read them while you write queries. Drag the sidebar's edge to make it wider or narrower. **Each text column keeps its own queries and results:** switch columns and back, and nothing is lost. The column picker shows how many queries each column has.
 3. **Add a query.** There are two kinds, each with its own tab at the top:
    - **New LLM Query:** write a full sentence, for example *"Mentions a person getting hit by a car or other vehicle, or almost getting hit (near misses count)"*, and press Enter. The AI reads every row and answers yes or no.
-   - **New Keyword Query:** type words separated by commas, for example *car, truck, bus, hit by*. A row matches if it contains any of them; upper/lower case is ignored. With **Whole words only** (on by default), "car" does not match "scar". Keyword queries are free and instant and need no API key; their confidence is always 1.00.
+   - **New Keyword Query:** type words separated by commas, for example *car, truck, bus, respect\**. A row matches if it contains any of them, as whole words, with upper/lower case ignored: "car" matches "Car", "car." and "car's" but not "scar" or "carpet". A **\*** at the end of a word matches every word that starts with it: *respect\** matches respect, respects, respected and respecting. Keyword queries are free and instant and need no API key; their confidence is always 1.00.
 
    A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
 4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost. If the results look wrong, click **Edit**, reword the query and test again.
@@ -90,7 +90,6 @@ About **13 seconds and $0.009 per 1,000 short answers**. Re-running an unchanged
 | Setting | Default | Change it when |
 |---|---|---|
 | `PROVIDER` / `ANTHROPIC_MODEL` | `"openai"` / `claude-haiku-5-5` | You want the app to start with Claude (`"anthropic"`), or Anthropic retires the model (update the 3 `ANTHROPIC_PRICE_*` values too). The gear icon switches provider while the app runs |
-| `KEYWORD_WHOLE_WORDS_DEFAULT` | `True` | You want new keyword queries to match inside longer words by default |
 | `SIDEBAR_FILTER_BUTTONS` | `False` | You prefer filter buttons (All / Matched / Not matched / Not labelled) over highlighting in the sidebar |
 | `VOTE_CHECK_BELOW` / `VOTE_CHECK_ROUNDS` | `0.80` / `4` | Claude only: which rows are re-checked and how many extra times. Higher or more costs more |
 | `CLAUDE_CONFIDENCE_CALIBRATION` | from `scripts/calibrate_claude_confidence.py` | Re-run that script after changing `ANTHROPIC_MODEL` and paste its table here |
