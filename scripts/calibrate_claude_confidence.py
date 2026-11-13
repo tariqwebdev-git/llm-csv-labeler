@@ -27,7 +27,8 @@ from labeler.models import Provider  # noqa: E402
 from run_eval import CASES  # noqa: E402
 
 BANDS = [(0.5, 0.6), (0.6, 0.7), (0.7, 0.8), (0.8, 0.9), (0.9, 1.01)]
-MIN_ROWS_PER_BAND = 5      # fewer rows than this: too few to trust, band skipped
+MIN_ROWS_PER_BAND = 30     # fewer rows than this: too few to trust, band skipped
+MIN_TRUSTED_BANDS = 3      # fewer trusted bands than this: no table is suggested
 
 
 def main() -> int:
@@ -54,6 +55,7 @@ def main() -> int:
     print(f"\n{len(pairs)} scored rows, total cost ${total_cost:.4f}\n")
     print("Raw confidence | rows | actually right")
     table = [(0.5, 0.5)]
+    trusted_bands = 0
     for low, high in BANDS:
         band = [ok for conf, ok in pairs if low <= conf < high]
         if not band:
@@ -61,9 +63,15 @@ def main() -> int:
         accuracy = sum(band) / len(band)
         print(f"  {low:.1f}-{min(high, 1.0):.1f}      | {len(band):4d} | {accuracy:.0%}")
         if len(band) >= MIN_ROWS_PER_BAND:
+            trusted_bands += 1
             middle = round((low + min(high, 1.0)) / 2, 2)
             table.append((middle, round(max(accuracy, table[-1][1]), 2)))   # never decreasing
     table.append((1.0, table[-1][1]))
+    if trusted_bands < MIN_TRUSTED_BANDS:
+        print(f"\nNot enough rows in the lower bands to calibrate (each band needs {MIN_ROWS_PER_BAND}+ rows, "
+              f"and {MIN_TRUSTED_BANDS}+ bands are needed). Keep CLAUDE_CONFIDENCE_CALIBRATION as it is: the raw "
+              "scores already rank doubtful rows lowest. Re-run on a larger hand-checked file.")
+        return 0
     print(f"\nPaste into labeler/config.py:\nCLAUDE_CONFIDENCE_CALIBRATION = {table}")
     return 0
 
