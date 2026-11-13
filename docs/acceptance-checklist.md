@@ -67,6 +67,16 @@ Tests run with `pytest` and cost nothing. Live checks used the real API.
 ## Model lifetime
 Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previous default `gpt-4o-mini` shuts down 2027-01-14. To change model: `config.py` (`MODEL`, `REASONING_EFFORT`, the 3 prices), then `python scripts/run_eval.py --model <name>`.
 
+## Milestone 2: four additional features (v1.1.0, 2026-11-13)
+| Item | Status | Evidence |
+|---|---|---|
+| Claude as an option alongside OpenAI; OpenAI unchanged | ✅ | `tests/test_anthropic_client.py`, `test_openai_runs_are_unchanged` (same prompt and cache keys); live check with Alex's key: 20/20 |
+| Claude confidence without logprobs | ✅ | Stated score + vote check (`tests/test_confidence_check.py`); live eval: wrong labels get the lowest scores (`docs/claude-confidence-method.md`) |
+| Clicking a query highlights its rows in the sidebar (filter switchable) | ✅ | `test_sidebar_highlights_a_querys_rows_without_filter_by_default`, `test_sidebar_filter_buttons_when_enabled`; browser `check_part2` |
+| Separate workspace per text column; save, load and download still work | ✅ | `tests/test_workspace_actions.py`, `test_switching_column_keeps_each_columns_queries`; browser download order across columns |
+| Keyword queries: whole words, case ignored, OR, `*` word starts, punctuation, escaping | ✅ | `tests/test_keyword_matcher.py`; browser check = regex count |
+| White answer cells in the sidebar; match count on cards, also collapsed | ✅ | `tests/test_answer_table.py`, `test_card_header_shows_match_count_also_collapsed`; pixel check (255,255,255) |
+
 ## Open items for Alex
 1. Optional: 20 hand-labelled rows per query and an accuracy target X. We do not ask him for these unless needed.
 2. Installed (2026-11-06); first run hit the conda issue, fix sent by message, waiting for his confirmation. He then deletes the "highlighter-dev" key.

@@ -130,7 +130,7 @@ with sync_playwright() as p:
             "housing_open", "safety_open", "night_dark", "night_dark_conf", "night_dark_note"]
     check("download column order", header == want, str(header))
 
-    # Provider switch: Claude without a key
+    # Provider switch to Claude: works with or without ANTHROPIC_API_KEY in .env (no Claude call is made)
     page.locator(".st-key-session_info [data-testid=stPopover] button").first.click()
     page.wait_for_timeout(500)
     page.locator('[data-testid="stPopoverBody"]').get_by_text(re.compile("^Claude")).click()
@@ -138,12 +138,16 @@ with sync_playwright() as p:
     page.keyboard.press("Escape")
     page.wait_for_timeout(500)
     top = text(page, ".st-key-top_bar")
-    check("key status follows provider", "No Claude key" in top, top[:120])
-    check("Claude key warning", "Claude API key missing" in text(page, ".st-key-query_area"))
+    has_key = "No Claude key" not in top
+    check("key status follows provider", "Claude key" in top, top[:120])
+    warning = "Claude API key missing" in text(page, ".st-key-query_area")
+    check("Claude key warning only without a key", warning != has_key)
     llm_run = card(page, "person_getting_hit").get_by_role("button", name="Run", exact=True)
     kw_run = card(page, "car_truck_bus").get_by_role("button", name="Run", exact=True)
-    check("LLM run disabled, keyword run enabled", llm_run.is_disabled() and kw_run.is_enabled())
-    page.screenshot(path=out / "p2_2_claude_no_key.png")
+    check("LLM run follows the key, keyword run always enabled",
+          llm_run.is_enabled() == has_key and kw_run.is_enabled())
+    check("Claude estimate mentions re-checks", "re-checks of unsure rows" in card(page, "person_getting_hit").inner_text())
+    page.screenshot(path=out / "p2_2_claude_selected.png")
 
     for w, h in ((1100, 800), (760, 700)):
         page.set_viewport_size({"width": w, "height": h})

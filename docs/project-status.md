@@ -6,7 +6,7 @@ Last updated: 2026-11-12
 
 ## Where we are
 - **Alex tested v1.0.2 and is happy** ("looks terrific"). He **activated Milestone 2 "Four additional features" ($400)**: Claude option, highlight/filter a query's rows in the sidebar, a workspace per column, keyword queries. That's exactly Part 2, already built on `feature/part2`.
-- **v1.1.0 is built on `dev`** (2026-11-12): Part 2 merged, white sidebar cells, highlight-only sidebar, match count on cards, Claude confidence (stated score + vote check + calibration). 128 tests, browser checks pass. **Not released: waiting for Alex's Claude key** to calibrate the confidence and run a live check (Tariq's decision).
+- **v1.1.0 released on 2026-11-13** (Milestone 2): Part 2, white sidebar cells, highlight-only sidebar, match count on cards, keyword rules (whole words, `*` wildcard), Claude with confidence (stated score + vote check), checked live with Alex's key. Zip `output/llm-csv-labeler-v1.1.0.zip`. **Tariq sends one end-of-day report to the senior, and the zip with a short note for Alex.**
 - **People:** Asad (senior) has left. The new senior is new to the project and forwards client messages directly; Tariq writes the replies. Don't mention any senior in client messages.
 
 | Date | What happened |
@@ -29,6 +29,9 @@ Last updated: 2026-11-12
 | 2026-11-12 | **Reply sent to Alex** (by Tariq): starting the four features; the 2 small changes come in the same version; highlight first, filter is an easy switch; **asked for a Claude API key** (console.anthropic.com, low spend limit, delete after); **hosting quote** (see Decisions). Waiting for his answers. |
 | 2026-11-12 | Asad has left the company; the new senior is new to the project. |
 | 2026-11-12 | **v1.1.0 built on `dev`** (plan approved by Tariq: highlight only, release waits for the Claude key). Details: `docs/milestone-3/post-development.md` (v1.1.0 section). |
+| 2026-11-13 | Senior forwarded **Alex's Claude key** (in `.env` only, about a $5 limit; Alex deletes it after) and the Milestone 2 work order. He asked for the Claude plan (model, confidence, cost per 1,000 rows) and a time estimate. **Keyword rules confirmed by Alex:** whole words, case ignored, OR, `*` at the end = word starts, punctuation handled, keywords escaped. Hosting: Alex leans to **Full**, no work until he confirms. Popup: skip. |
+| 2026-11-13 | Built the keyword rules (removed the whole-words checkbox). **Live Claude check:** 20/20 on the main query; eval vs OpenAI 100/98/94.6/100% vs 100/98/99.4/100%; about 2x OpenAI's cost; wrong labels get the lowest scores. Calibration table kept as identity (too few unsure rows). Test spend about $0.012. |
+| 2026-11-13 | **Released v1.1.0.** Messages to send at the end of the day: one report to the senior (status, Claude plan with the measured cost) and the zip with a short note for Alex. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -43,15 +46,10 @@ Last updated: 2026-11-12
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-1. **When Alex's Claude key arrives** (put it only in `.env` as `ANTHROPIC_API_KEY=`):
-   - live check: `python scripts/run_labeling_cli.py --csv sample_data/sample.csv --column transportation_open --query "Mentions a person getting hit by a car or other vehicle (near misses count)" --limit 20 --provider anthropic`
-   - `python scripts/calibrate_claude_confidence.py`, then paste its table into `config.CLAUDE_CONFIDENCE_CALIBRATION`
-   - compare with `python scripts/run_eval.py --provider anthropic` vs OpenAI
-   - then **release v1.1.0** (How to release a zip; also check `tools/` is left out of the zip, and that the clean install pulls `anthropic`), take 3 screenshots, and send Alex the zip only
+1. **Send** (Tariq, end of day): the report to the senior, then the v1.1.0 zip + a short note to Alex (the guide's "Getting a new version" has the update steps).
 2. **Waiting for Alex:**
-   - a **Claude API key**. It goes only in `.env` as `ANTHROPIC_API_KEY=`, never in chat or a committed file. Needed for the live Claude check and confidence calibration.
-   - **hosting answers:** how many users, and a shared API key with a cap or each their own
-   - whether keyword matching is **whole words only** (a checkbox, default on, so it doesn't block anything)
+   - feedback on v1.1.0; he deletes the Claude test key once he's happy
+   - **hosting:** he leans to the Full option; plan it as its own milestone when he confirms (quote under Decisions)
 3. **Hosting:** after his answers, plan it as its own milestone (quote and options under Decisions).
 4. Still unconfirmed by Alex: the update steps (`ditto`, macOS-only) and the CSV opening in Excel on his Mac.
 5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
