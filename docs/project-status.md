@@ -31,7 +31,7 @@ Last updated: 2026-11-12
 | 2026-11-12 | **v1.1.0 built on `dev`** (plan approved by Tariq: highlight only, release waits for the Claude key). Details: `docs/milestone-3/post-development.md` (v1.1.0 section). |
 | 2026-11-13 | Senior forwarded **Alex's Claude key** (in `.env` only, about a $5 limit; Alex deletes it after) and the Milestone 2 work order. He asked for the Claude plan (model, confidence, cost per 1,000 rows) and a time estimate. **Keyword rules confirmed by Alex:** whole words, case ignored, OR, `*` at the end = word starts, punctuation handled, keywords escaped. Hosting: Alex leans to **Full**, no work until he confirms. Popup: skip. |
 | 2026-11-13 | Built the keyword rules (removed the whole-words checkbox). **Live Claude check:** 20/20 on the main query; eval vs OpenAI 100/98/94.6/100% vs 100/98/99.4/100%; about 2x OpenAI's cost; wrong labels get the lowest scores. Calibration table kept as identity (too few unsure rows). Test spend about $0.012. |
-| 2026-11-13 | **Released v1.1.0.** Messages to send at the end of the day: one report to the senior (status, Claude plan with the measured cost) and the zip with a short note for Alex. |
+| 2026-11-13 | **Released v1.1.0.** (Rebuilt the same day without `INSTALL-MAC.md`, which is now always sent separately; tag moved, zip not yet sent.) Messages to send at the end of the day: one report to the senior (status, Claude plan with the measured cost) and the zip with a short note for Alex. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -59,13 +59,14 @@ Last updated: 2026-11-12
 ## How to release a zip
 1. Merge the feature branch into `dev`, run `pytest`, then `dev` → `staging` → `main` (`--no-ff`). Then `git tag -a vX.Y.Z` on `main`, and push the branches and the tag.
 2. Build: `git archive --format=zip --prefix=llm-csv-labeler/ -o output/llm-csv-labeler-vX.Y.Z.zip vX.Y.Z` (`output/` is git-ignored). **Delete older zips** in `output/` so the wrong one isn't sent.
-3. Check the zip: no `CLAUDE.md`, `docs/milestone-*`, `docs/walkthrough-script.md`, `docs/acceptance-checklist.md`, `docs/project-status.md`, `.env`, `cache.db` or `data/`, and a search for "asad|upwork" finds nothing. Unzip into a temp folder, install with the commands above, run `pytest`, and check that the app starts.
+3. Check the zip: no `CLAUDE.md`, `docs/milestone-*`, `docs/walkthrough-script.md`, `docs/acceptance-checklist.md`, `docs/project-status.md`, `INSTALL-MAC.md`, `.env`, `cache.db` or `data/`, and a search for "asad|upwork" finds nothing. Unzip into a temp folder, install with the commands above, run `pytest`, and check that the app starts.
 4. Internal files are kept out of the zip by `export-ignore` in `.gitattributes`. Add any new internal doc there.
 
 ## Decisions (and why)
 - **Claude confidence:** stated score + vote check on doubtful rows + calibration (`docs/claude-confidence-method.md`). Keyword query confidence is 1.00.
 - **Browser checks** live in `tools/browser_checks/` (Playwright + Edge, separate venv, internal only).
 - **Delivery is a zip only;** Alex has no GitHub access. The zip has no git history.
+- **`INSTALL-MAC.md` is never in the zip** (Tariq's rule, 2026-11-13): Tariq sends it separately next to the zip. It is `export-ignore`d, and the README names it in plain text (no links that would break in the zip).
 - **Only Tariq is shown as author** in commits (no Claude co-author line). The whole history was rewritten on 2026-11-05 to remove it; a backup bundle was saved in the session scratchpad (temporary).
 - **Internal docs stay out of the zip:** CLAUDE.md names the senior; the milestone docs and checklist hold internal numbers and asks.
 - **Model:** `gpt-6-luna` with `REASONING_EFFORT="none"`; `gpt-4o-mini` shuts down 2027-01-14. See `milestone-2/post-development.md` Part E.

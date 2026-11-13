@@ -11,4 +11,5 @@ docs/acceptance-checklist.md export-ignore
 docs/project-status.md export-ignore
 docs/claude-confidence-method.md export-ignore
 tools/ export-ignore
+INSTALL-MAC.md export-ignore
 .gitattributes export-ignore
