@@ -26,8 +26,8 @@ def test_invalid_files_rejected(bad):
 def test_keyword_kind_round_trips_and_old_files_load_as_llm():
     from labeler.models import Query, QueryKind
     from labeler.query_store import queries_from_json, queries_to_json
-    saved = queries_to_json([Query("vehicles", "car, truck", kind=QueryKind.KEYWORD, whole_words=False)])
+    saved = queries_to_json([Query("vehicles", "car, truck*", kind=QueryKind.KEYWORD)])
     loaded = queries_from_json(saved)[0]
-    assert (loaded.kind, loaded.whole_words, loaded.text) == (QueryKind.KEYWORD, False, "car, truck")
+    assert (loaded.kind, loaded.text) == (QueryKind.KEYWORD, "car, truck*")
     old = queries_from_json('{"version": 1, "queries": [{"name": "kids", "text": "Stories about children"}]}')[0]
-    assert old.kind == QueryKind.LLM and old.whole_words is True
+    assert old.kind == QueryKind.LLM

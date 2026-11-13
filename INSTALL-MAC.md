@@ -146,7 +146,7 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
 You don't need to install everything again. Your key, your saved results and the installed packages stay where they are.
 
 **What's new in this version**
-- **Keyword queries:** a second tab, **New Keyword Query**. Type words separated by commas (e.g. *car, truck, bus*); a row matches if it contains any of them. Free, instant, no API key needed.
+- **Keyword queries:** a second tab, **New Keyword Query**. Type words separated by commas (e.g. *car, truck, bus*); a row matches if it contains any of them as whole words, upper/lower case ignored. A **\*** at the end matches word starts: *respect\** finds respect, respects, respected and respecting. Free, instant, no API key needed.
 - **Each text column has its own queries and results.** Switch columns and back, and nothing is lost.
 - **See one query's rows in the sidebar:** click the sidebar icon on a card; its matched rows are highlighted in green.
 - **Number of matches on each card**, also when it's collapsed (e.g. *traffic_accidents: 45 matches*).

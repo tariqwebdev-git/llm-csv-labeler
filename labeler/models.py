@@ -59,7 +59,6 @@ class Query:
     status: QueryStatus = QueryStatus.NOT_RUN
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     kind: QueryKind = QueryKind.LLM
-    whole_words: bool = True        # keyword queries only: "car" does not match "scar"
 
 
 @dataclass(frozen=True)

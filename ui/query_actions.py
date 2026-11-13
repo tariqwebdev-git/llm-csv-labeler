@@ -34,11 +34,9 @@ def free_column_name(state: AppState, wanted: str, exclude_id: str | None = None
     return candidate
 
 
-def add_query(state: AppState, text: str, name: str, kind: QueryKind = QueryKind.LLM,
-              whole_words: bool = True) -> Query:
+def add_query(state: AppState, text: str, name: str, kind: QueryKind = QueryKind.LLM) -> Query:
     """Add a 'Not run' query (LLM or keyword) with a clash-free column name."""
-    query = Query(name=free_column_name(state, name or text), text=text.strip(), kind=kind,
-                  whole_words=whole_words)
+    query = Query(name=free_column_name(state, name or text), text=text.strip(), kind=kind)
     state.queries.append(query)
     return query
 
@@ -50,16 +48,13 @@ def delete_query(state: AppState, query_id: str) -> None:
     state.test_runs.pop(query_id, None)
 
 
-def update_query_text(state: AppState, query_id: str, text: str, whole_words: bool | None = None) -> None:
-    """New wording (or, for a keyword query, a new whole-words choice): an old full
-    result becomes Out of date; an old test is dropped."""
+def update_query_text(state: AppState, query_id: str, text: str) -> None:
+    """New wording (or new keywords): an old full result becomes Out of date; an old test is dropped."""
     query = find_query(state, query_id)
     text = text.strip()
-    whole_words = query.whole_words if query is not None and whole_words is None else whole_words
-    if query is None or not text or (text == query.text and whole_words == query.whole_words):
+    if query is None or not text or text == query.text:
         return
     query.text = text
-    query.whole_words = whole_words
     state.test_runs.pop(query_id, None)
     query.status = QueryStatus.OUT_OF_DATE if query_id in state.full_runs else QueryStatus.NOT_RUN
 

@@ -99,18 +99,14 @@ def run_query(
     ))
 
 
-def run_keyword_query(
-    texts: Sequence[object],
-    keywords_text: str,
-    whole_words: bool = config.KEYWORD_WHOLE_WORDS_DEFAULT,
-) -> RunResult:
+def run_keyword_query(texts: Sequence[object], keywords_text: str) -> RunResult:
     """Label each text 1 if it contains any of the keywords ("car, truck, bus"), else 0.
 
-    No API call and no cost. Matching ignores case; whole_words=True means "car"
-    does not match "scar". Empty rows get note 'empty', as with LLM queries.
+    No API call and no cost. Whole words, case ignored ("car" does not match "scar");
+    "respect*" matches every word starting with "respect". Empty rows get note 'empty'.
     """
     started = time.perf_counter()
-    labels = match_keywords(texts, parse_keywords(keywords_text), whole_words)
+    labels = match_keywords(texts, parse_keywords(keywords_text))
     return RunResult(labels=labels, stats=_run_stats(labels, started))
 
 
