@@ -31,13 +31,34 @@ class QueryStatus(str, Enum):
     OUT_OF_DATE = "Out of date"
 
 
+class Provider(str, Enum):
+    """Which AI company answers LLM queries."""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"      # Claude
+
+
+@dataclass(frozen=True)
+class Prices:
+    """USD per 1 million tokens."""
+    input_per_1m: float
+    cached_input_per_1m: float
+    output_per_1m: float
+
+
+class QueryKind(str, Enum):
+    """How a query is answered."""
+    LLM = "llm"            # the model reads each row and answers yes/no
+    KEYWORD = "keyword"    # a row matches if it contains any of the words (no API, free)
+
+
 @dataclass
 class Query:
     """One user query; becomes one set of output columns."""
     name: str                       # short column name, e.g. "car_crashes"
-    text: str                       # full criterion, e.g. "Answers about car crashes"
+    text: str                       # LLM: full criterion; keyword: the words, e.g. "car, truck, bus"
     status: QueryStatus = QueryStatus.NOT_RUN
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
+    kind: QueryKind = QueryKind.LLM
 
 
 @dataclass(frozen=True)

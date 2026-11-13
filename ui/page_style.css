@@ -47,7 +47,8 @@
 .st-key-top_bar [data-testid="stColumn"]:has(.st-key-session_info) {
   min-width: 7.5rem;            /* key status and spend are short */
 }
-.st-key-top_bar [data-testid="stColumn"]:has(.st-key-add_query) {
+.st-key-top_bar [data-testid="stColumn"]:has(.st-key-add_query),
+.st-key-top_bar [data-testid="stColumn"]:has(.st-key-add_keyword_query) {
   min-width: 4rem;              /* the Add button needs less room */
 }
 

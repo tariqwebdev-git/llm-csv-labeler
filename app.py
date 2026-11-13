@@ -34,7 +34,7 @@ st.set_page_config(page_title="LLM CSV Labeler", layout="wide",
 page_style.apply()
 
 state = get_state()
-api_key = load_api_key()
+api_key = load_api_key(state.provider)   # the key of the chosen provider (OpenAI or Claude)
 
 # Top bar (stays in view): upload + text column, session info on the right, then Create Query.
 with st.container(key="top_bar"):
@@ -47,7 +47,7 @@ with st.container(key="top_bar"):
 
 # Query area: the only part of the page that scrolls (between the two bars).
 with st.container(key="query_area"):
-    session_info.render_warnings(api_key_found=api_key is not None)
+    session_info.render_warnings(state, api_key_found=api_key is not None)
     data_preview_section.render(state)
     query_list_section.render(state, api_key)
 

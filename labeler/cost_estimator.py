@@ -1,29 +1,39 @@
 """Dollar cost, before a run (estimate) and after (actual usage)."""
 from labeler import config
 from labeler.batch_planner import plan_batches
-from labeler.models import TokenUsage
-from labeler.prompt_builder import SYSTEM_PROMPT, build_batch_prompt
+from labeler.models import Provider, TokenUsage
+from labeler.prompt_builder import build_batch_prompt, system_prompt
+from labeler.provider_settings import prices_for
 from labeler.token_counter import count_tokens
 
 
-def estimate_tokens(texts: list[str], criterion: str) -> tuple[int, int]:
-    """(input_tokens, output_tokens) to label `texts`, counted on the real batch prompts."""
+def estimate_tokens(texts: list[str], criterion: str, scored: bool = False) -> tuple[int, int]:
+    """(input_tokens, output_tokens) to label `texts`, counted on the real batch prompts.
+
+    scored=True (Claude) adds the certainty on each reply line and the expected
+    re-checks of doubtful rows (config.VOTE_CHECK_SHARE_ESTIMATE x VOTE_CHECK_ROUNDS).
+    """
     if not texts:
         return 0, 0
-    system_tokens = count_tokens(SYSTEM_PROMPT)
+    system_tokens = count_tokens(system_prompt(scored))
     input_tokens = 0
     for batch in plan_batches(texts):
-        prompt = build_batch_prompt(criterion, [texts[i] for i in batch])
+        prompt = build_batch_prompt(criterion, [texts[i] for i in batch], scored)
         input_tokens += system_tokens + count_tokens(prompt) + config.MESSAGE_OVERHEAD_TOKENS
-    output_tokens = len(texts) * config.OUTPUT_TOKENS_PER_ROW_ESTIMATE
+    per_row = config.OUTPUT_TOKENS_PER_ROW_ESTIMATE + (config.SCORE_OUTPUT_TOKENS_PER_ROW if scored else 0)
+    output_tokens = len(texts) * per_row
+    if scored:
+        factor = 1 + config.VOTE_CHECK_SHARE_ESTIMATE * config.VOTE_CHECK_ROUNDS
+        input_tokens, output_tokens = round(input_tokens * factor), round(output_tokens * factor)
     return input_tokens, output_tokens
 
 
-def cost_usd(usage: TokenUsage) -> float:
-    """Dollar cost of the given token usage, using prices in config.py."""
+def cost_usd(usage: TokenUsage, provider: Provider = Provider.OPENAI) -> float:
+    """Dollar cost of the given token usage, using the provider's prices in config.py."""
+    prices = prices_for(provider)
     uncached_input = usage.input_tokens - usage.cached_input_tokens
     return (
-        uncached_input * config.PRICE_INPUT_PER_1M
-        + usage.cached_input_tokens * config.PRICE_CACHED_INPUT_PER_1M
-        + usage.output_tokens * config.PRICE_OUTPUT_PER_1M
+        uncached_input * prices.input_per_1m
+        + usage.cached_input_tokens * prices.cached_input_per_1m
+        + usage.output_tokens * prices.output_per_1m
     ) / 1_000_000

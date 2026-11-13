@@ -25,6 +25,8 @@ from labeler import config  # noqa: E402
 from labeler.api_key import load_api_key  # noqa: E402
 from labeler.errors import LabelerError  # noqa: E402
 from labeler.labeling_engine import run_query  # noqa: E402
+from labeler.models import Provider  # noqa: E402
+from labeler.provider_settings import model_for  # noqa: E402
 
 # Per model: USD per 1M tokens (input, cached input, output) and reasoning effort
 # (reasoning models need "none" to return logprobs). Prices checked 2026-11-05.
@@ -60,11 +62,15 @@ def main() -> int:
     parser.add_argument("--csv", type=Path, default=PROJECT_ROOT / "sample_data" / "sample.csv")
     parser.add_argument("--key", type=Path, default=PROJECT_ROOT / "sample_data" / "sample_key.csv")
     parser.add_argument("--column", default="transportation_open")
-    parser.add_argument("--model", default=config.MODEL)
+    parser.add_argument("--provider", choices=[p.value for p in Provider], default=config.PROVIDER,
+                        help="openai or anthropic (Claude: no confidence score yet)")
+    parser.add_argument("--model", help="default: the provider's model in config.py")
     parser.add_argument("--cases", type=Path, help='JSON list of {"query", "key_column", "column"}')
     args = parser.parse_args()
     cases = [EvalCase(**c) for c in json.loads(args.cases.read_text(encoding="utf-8"))] if args.cases else CASES
 
+    provider = Provider(args.provider)
+    args.model = args.model or model_for(provider)
     if args.model in MODEL_SETTINGS:
         prices, config.REASONING_EFFORT = MODEL_SETTINGS[args.model]
         config.PRICE_INPUT_PER_1M, config.PRICE_CACHED_INPUT_PER_1M, config.PRICE_OUTPUT_PER_1M = prices
@@ -77,7 +83,8 @@ def main() -> int:
         for case in cases:
             texts = data[case.column or args.column].tolist()
             cache = Path(tempfile.mkdtemp(prefix="eval_")) / "cache.db"
-            result = run_query(texts, case.query, api_key=load_api_key(), model=args.model, cache_path=cache)
+            result = run_query(texts, case.query, api_key=load_api_key(provider), provider=provider,
+                               model=args.model, cache_path=cache)
             total_cost += result.stats.cost_usd
             _report(case, texts, key[case.key_column].tolist(), result)
     except LabelerError as exc:
