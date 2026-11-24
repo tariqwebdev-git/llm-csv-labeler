@@ -30,6 +30,16 @@
   padding-right: 0.25rem;       /* room for the scrollbar */
 }
 
+/* Query cards: two side by side when the query area is wide enough (a big monitor),
+   one per row otherwise. Each card keeps its own height. Change 36rem to adjust when
+   the second column appears. */
+[data-testid="stVerticalBlock"].st-key-query_cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36rem, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
 /* Sidebar: at most 45% of the window, even when dragged wider, so the query area keeps room. */
 [data-testid="stSidebar"] {
   max-width: 45vw;

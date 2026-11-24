@@ -22,6 +22,7 @@ python -m venv %TEMP%\pwenv
 | `check_scrolling.py` | Only the query area scrolls; bar positions stay identical; last card reachable; 1600/1100/760 px | under $0.001 |
 | `check_narrow_window.py` | Sidebar dragged wide on a 1000 px window, then 800/1366/1920 px (screenshots to inspect) | $0 |
 | `check_part2.py` | Part 2 add-ons, 14 checks: tabs, keyword query = regex count, sidebar filter, column workspaces, download order across columns, Claude switch without a key. **Needs the Part 2 code (`feature/part2`, or `dev` once merged).** | under $0.001 |
+| `check_v12.py` | v1.2.0, 9 checks: two-column cards at 1920 px and one column at 1100 px, one-line stats, estimate hidden after a run, test results folded, sidebar "No match yet" count (all answers, then fewer after a keyword run) | $0 (keyword queries only) |
 | `take_screenshots.py` | The 3 screenshots for reports (after Run, collapsed cards, a long answer opened) | under $0.001 |
 
 ## Locator tips (learned the hard way)

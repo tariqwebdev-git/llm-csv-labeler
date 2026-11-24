@@ -2,11 +2,12 @@
 
 **Read this first in every new session.** Update it whenever something is sent to Alex, he replies, or a decision is made. This file is internal: `export-ignore` keeps it out of Alex's zip.
 
-Last updated: 2026-11-12
+Last updated: 2026-11-24
 
 ## Where we are
 - **Alex tested v1.0.2 and is happy** ("looks terrific"). He **activated Milestone 2 "Four additional features" ($400)**: Claude option, highlight/filter a query's rows in the sidebar, a workspace per column, keyword queries. That's exactly Part 2, already built on `feature/part2`.
 - **v1.1.0 released on 2026-11-13** (Milestone 2): Part 2, white sidebar cells, highlight-only sidebar, match count on cards, keyword rules (whole words, `*` wildcard), Claude with confidence (stated score + vote check), checked live with Alex's key. Zip `output/llm-csv-labeler-v1.1.0.zip`. **Tariq sends one end-of-day report to the senior, and the zip with a short note for Alex.**
+- **v1.1.0 sent to Alex on 2026-11-13** (zip + the guide as a PDF, separately). **Alex opened his Milestone 3 (2026-11-23):** Claude re-check message (free), compact two-column cards (free), "No match yet" view ($70). Built as **v1.2.0** on `feature/v1.2` (`docs/milestone-4/`).
 - **People:** Asad (senior) has left. The new senior is new to the project and forwards client messages directly; Tariq writes the replies. Don't mention any senior in client messages.
 
 | Date | What happened |
@@ -31,7 +32,11 @@ Last updated: 2026-11-12
 | 2026-11-12 | **v1.1.0 built on `dev`** (plan approved by Tariq: highlight only, release waits for the Claude key). Details: `docs/milestone-3/post-development.md` (v1.1.0 section). |
 | 2026-11-13 | Senior forwarded **Alex's Claude key** (in `.env` only, about a $5 limit; Alex deletes it after) and the Milestone 2 work order. He asked for the Claude plan (model, confidence, cost per 1,000 rows) and a time estimate. **Keyword rules confirmed by Alex:** whole words, case ignored, OR, `*` at the end = word starts, punctuation handled, keywords escaped. Hosting: Alex leans to **Full**, no work until he confirms. Popup: skip. |
 | 2026-11-13 | Built the keyword rules (removed the whole-words checkbox). **Live Claude check:** 20/20 on the main query; eval vs OpenAI 100/98/94.6/100% vs 100/98/99.4/100%; about 2x OpenAI's cost; wrong labels get the lowest scores. Calibration table kept as identity (too few unsure rows). Test spend about $0.012. |
-| 2026-11-13 | **Released v1.1.0.** (Rebuilt the same day without `INSTALL-MAC.md`, which is now always sent separately; tag moved, zip not yet sent.) Messages to send at the end of the day: one report to the senior (status, Claude plan with the measured cost) and the zip with a short note for Alex. |
+| 2026-11-13 | **Released v1.1.0.** (Rebuilt the same day without `INSTALL-MAC.md`, which is now always sent separately. The tag moved locally; GitHub still has the old tag until Tariq runs `git push -f origin v1.1.0`.) |
+| 2026-11-13 | **v1.1.0 sent to Alex** by Tariq: zip, the guide as a PDF, 3 screenshots, a short note (features, how to add the Claude key). |
+| 2026-11-20 | Alex: "I don't see the features". **Cause: the guide's update line `unzip -o 'llm-csv-labeler-v*.zip'`** also unpacked his older zips (in no fixed order on macOS), so old files were copied. Fix sent: exact zip name, remove the old unzipped copy, close the old app (**Control+C**), check with `ls`. That worked. |
+| 2026-11-23 | **Alex's feedback on v1.1.0** ("looks terrific"): (1) bar fills, then 30–60 s more with Claude (the re-check, not a bug); (2) confidence 0.50–1.00 for either label: confirmed; (3) keyword spaces trimmed: confirmed; (4) cards waste space on a big screen; (5) wants a view of answers no query matched yet. **Reply sent:** 1 and 4 free as fixes, 5 is new at $70. **He opened the milestone.** He also shared his email address (we didn't ask; kept out of the repo and docs). |
+| 2026-11-24 | **v1.2.0 built** on `feature/v1.2`: re-check rounds run together with their own progress message, two-column slim cards, sidebar "No match yet" view, guide update steps fixed. 140 tests, browser checks pass, live Claude 40 rows in 2.3 s. Details: `docs/milestone-4/post-development.md`. |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -46,12 +51,12 @@ Last updated: 2026-11-12
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-1. **Send** (Tariq, end of day): the report to the senior, then the v1.1.0 zip + a short note to Alex (the guide's "Getting a new version" has the update steps).
+1. **Release v1.2.0** and send Alex the zip + `INSTALL-MAC.md` (separately) + a short note.
 2. **Waiting for Alex:**
-   - feedback on v1.1.0; he deletes the Claude test key once he's happy
+   - feedback on v1.2.0; he deletes the Claude test key once he's happy (it still worked on 2026-11-24)
    - **hosting:** he leans to the Full option; plan it as its own milestone when he confirms (quote under Decisions)
 3. **Hosting:** after his answers, plan it as its own milestone (quote and options under Decisions).
-4. Still unconfirmed by Alex: the update steps (`ditto`, macOS-only) and the CSV opening in Excel on his Mac.
+4. Still unconfirmed by Alex: the CSV opening in Excel on his Mac. (The update steps work on his Mac once the exact zip name is used.)
 5. **Optional, only if Alex asks:** his 20 hand-labelled rows per query; v2 ideas ("invert" for "does not" queries, several columns combined).
 
 **If a push is refused (403):** Windows Credential Manager may hold a different GitHub account (it once held `aasimdev`). Remove the `git:https://github.com` credential and sign in as `tariqwebdev-git`.

@@ -14,5 +14,7 @@ def render(state: AppState, api_key: str | None) -> None:
         st.info("Upload a CSV to test or run queries.")
     elif not api_key:
         st.warning("LLM queries can't be tested or run until the API key is found. Keyword queries work without it.")
-    for query in list(state.queries):
-        query_card.render(state, query, api_key)
+    # Two cards side by side when the window is wide enough (CSS grid in page_style.css).
+    with st.container(key="query_cards"):
+        for query in list(state.queries):
+            query_card.render(state, query, api_key)

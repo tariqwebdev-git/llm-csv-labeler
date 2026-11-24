@@ -1,4 +1,7 @@
 """Claude-style confidence: stated certainty, vote check on doubtful rows, calibration (no API cost)."""
+import asyncio
+import time
+
 from labeler import config
 from labeler.confidence_check import calibrate, combine_votes, finalize, is_doubtful
 from labeler.labeling_engine import estimate_cost, run_query
@@ -99,3 +102,42 @@ def test_claude_estimate_includes_rechecks(tmp_path):
     claude = estimate_cost(texts, "hit by a vehicle", provider=Provider.ANTHROPIC, cache_path=tmp_path / "c.db")
     factor = 1 + config.VOTE_CHECK_SHARE_ESTIMATE * config.VOTE_CHECK_ROUNDS
     assert claude.input_tokens > openai.input_tokens * (factor - 0.05)
+
+
+# --- re-check rounds run together, with their own progress ------------------------------
+class _SlowFake(FakeClassifier):
+    """Waits a little before each reply, like a real API call."""
+    async def classify(self, system_prompt, user_prompt, max_output_tokens):
+        await asyncio.sleep(0.2)
+        return await super().classify(system_prompt, user_prompt, max_output_tokens)
+
+
+def test_recheck_rounds_run_at_the_same_time(tmp_path):
+    fake = _SlowFake(score=lambda t: 60)
+    started = time.perf_counter()
+    _claude_run(["maybe hit 1", "maybe hit 2"], fake, tmp_path / "c.db")
+    # 1 first pass + 4 re-check rounds; one after another would take at least 5 x 0.2 s
+    assert len(fake.calls) == 1 + config.VOTE_CHECK_ROUNDS
+    assert time.perf_counter() - started < 0.2 * 3
+
+
+def test_recheck_never_sends_a_row_twice_in_one_request(tmp_path):
+    fake = FakeClassifier(score=lambda t: 60)
+    _claude_run(["maybe hit 1", "maybe hit 2", "maybe hit 3"], fake, tmp_path / "c.db")
+    assert all(len(call) == len(set(call)) for call in fake.calls)
+
+
+def test_recheck_progress_is_reported(tmp_path):
+    seen = []
+    run_query(["maybe hit 1", "a car hit me"], "hit by a vehicle", provider=Provider.ANTHROPIC,
+              classifier=FakeClassifier(score=lambda t: 60 if "maybe" in t else 95),
+              cache_path=tmp_path / "c.db", on_recheck_progress=lambda done, total: seen.append((done, total)))
+    assert seen[0] == (0, config.VOTE_CHECK_ROUNDS) and seen[-1] == (config.VOTE_CHECK_ROUNDS,) * 2
+
+
+def test_no_recheck_progress_when_every_row_is_sure(tmp_path):
+    seen = []
+    run_query(["a car hit me"], "hit by a vehicle", provider=Provider.ANTHROPIC,
+              classifier=FakeClassifier(score=lambda t: 95), cache_path=tmp_path / "c.db",
+              on_recheck_progress=lambda done, total: seen.append((done, total)))
+    assert seen == []
