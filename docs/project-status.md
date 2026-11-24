@@ -2,12 +2,12 @@
 
 **Read this first in every new session.** Update it whenever something is sent to Alex, he replies, or a decision is made. This file is internal: `export-ignore` keeps it out of Alex's zip.
 
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Where we are
 - **Alex tested v1.0.2 and is happy** ("looks terrific"). He **activated Milestone 2 "Four additional features" ($400)**: Claude option, highlight/filter a query's rows in the sidebar, a workspace per column, keyword queries. That's exactly Part 2, already built on `feature/part2`.
 - **v1.1.0 released on 2026-11-13** (Milestone 2): Part 2, white sidebar cells, highlight-only sidebar, match count on cards, keyword rules (whole words, `*` wildcard), Claude with confidence (stated score + vote check), checked live with Alex's key. Zip `output/llm-csv-labeler-v1.1.0.zip`. **Tariq sends one end-of-day report to the senior, and the zip with a short note for Alex.**
-- **v1.1.0 sent to Alex on 2026-11-13** (zip + the guide as a PDF, separately). **Alex opened his Milestone 3 (2026-11-23):** Claude re-check message (free), compact two-column cards (free), "No match yet" view ($70). Built as **v1.2.0** on `feature/v1.2` (`docs/milestone-4/`).
+- **v1.1.0 sent to Alex on 2026-11-13** (zip + the guide as a PDF, separately). **Alex opened his Milestone 3 (2026-11-23):** Claude re-check message (free), compact two-column cards (free), "No match yet" view ($70). Built as **v1.2.0** (`docs/milestone-4/`), tested by Tariq and **released on 2026-11-25**; zip `output/llm-csv-labeler-v1.2.0.zip`, ready to send.
 - **People:** Asad (senior) has left. The new senior is new to the project and forwards client messages directly; Tariq writes the replies. Don't mention any senior in client messages.
 
 | Date | What happened |
@@ -37,6 +37,7 @@ Last updated: 2026-11-24
 | 2026-11-20 | Alex: "I don't see the features". **Cause: the guide's update line `unzip -o 'llm-csv-labeler-v*.zip'`** also unpacked his older zips (in no fixed order on macOS), so old files were copied. Fix sent: exact zip name, remove the old unzipped copy, close the old app (**Control+C**), check with `ls`. That worked. |
 | 2026-11-23 | **Alex's feedback on v1.1.0** ("looks terrific"): (1) bar fills, then 30–60 s more with Claude (the re-check, not a bug); (2) confidence 0.50–1.00 for either label: confirmed; (3) keyword spaces trimmed: confirmed; (4) cards waste space on a big screen; (5) wants a view of answers no query matched yet. **Reply sent:** 1 and 4 free as fixes, 5 is new at $70. **He opened the milestone.** He also shared his email address (we didn't ask; kept out of the repo and docs). |
 | 2026-11-24 | **v1.2.0 built** on `feature/v1.2`: re-check rounds run together with their own progress message, two-column slim cards, sidebar "No match yet" view, guide update steps fixed. 140 tests, browser checks pass, live Claude 40 rows in 2.3 s. Details: `docs/milestone-4/post-development.md`. |
+| 2026-11-25 | Tariq tested v1.2.0 by hand: all fine. **Released v1.2.0** (`dev` → `staging` → `main`, tag pushed). Zip `output/llm-csv-labeler-v1.2.0.zip`: no internal files, no `INSTALL-MAC.md`, no keys, no Asad/Upwork mentions. Clean install (uv, Python 3.12.10): 140 tests pass and the app starts. Old v1.1.0 zip deleted. Screenshots in `output/checks/`: `v12_wide_two_columns.png`, `v12_narrow_one_column.png`, `v12_recheck_message.png`. (A clean install under a very long Windows path fails on the `anthropic` package's long file names; macOS has no such limit.) |
 
 ## Alex's environment
 - macOS. **Conda `(base)` is always active** in his Terminal, and his Python setup is "a bit of a mess" (his words).
@@ -51,7 +52,7 @@ Last updated: 2026-11-24
 - Note: the 20-row test that failed did reach OpenAI (it failed while decoding the reply), so it may have cost a fraction of a cent.
 
 ## Waiting on / next steps
-1. **Release v1.2.0** and send Alex the zip + `INSTALL-MAC.md` (separately) + a short note.
+1. **Send v1.2.0 to Alex:** the zip + `INSTALL-MAC.md` (separately, as a PDF like last time) + the 3 screenshots + a short note. Then log it here.
 2. **Waiting for Alex:**
    - feedback on v1.2.0; he deletes the Claude test key once he's happy (it still worked on 2026-11-24)
    - **hosting:** he leans to the Full option; plan it as its own milestone when he confirms (quote under Decisions)
