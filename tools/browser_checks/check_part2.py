@@ -85,7 +85,7 @@ with sync_playwright() as p:
     pattern = re.compile(r"(?<!\w)(?:truck|car|bus)(?!\w)", re.IGNORECASE)
     expected = sum(1 for t in data["transportation_open"] if t.strip() and pattern.search(t))
     check("keyword matches = regex count", f"{expected} of 220 matched" in kw_text, f"expected {expected}")
-    check("keyword run is free", "Free keyword match" in kw_text)
+    check("keyword run is free", "free keyword match" in kw_text.lower())
     check("match count in card header", f"car_truck_bus: {expected} matches" in kw_text)
 
     # Sidebar: the keyword query's rows, matches highlighted (no filter buttons by default)
@@ -146,7 +146,9 @@ with sync_playwright() as p:
     kw_run = card(page, "car_truck_bus").get_by_role("button", name="Run", exact=True)
     check("LLM run follows the key, keyword run always enabled",
           llm_run.is_enabled() == has_key and kw_run.is_enabled())
-    check("Claude estimate mentions re-checks", "re-checks of unsure rows" in card(page, "person_getting_hit").inner_text())
+    add_llm(page, "Mentions noise from traffic at night")      # the estimate shows only before a first run
+    newest = page.locator('[class*="st-key-card_"]').last.inner_text()
+    check("Claude estimate mentions re-checks", "re-checks of unsure rows" in newest)
     page.screenshot(path=out / "p2_2_claude_selected.png")
 
     for w, h in ((1100, 800), (760, 700)):

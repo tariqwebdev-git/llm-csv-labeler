@@ -87,7 +87,7 @@ def test_full_run_counts_box_and_download(make_app):
     assert not at.exception
     state = _state(at)
     assert all(q.status == QueryStatus.DONE for q in state.queries)
-    assert any("of 220 matched" in i.value for i in at.info)
+    assert any("of 220 matched" in i.value for i in at.caption)
     table = labeled_table(state)
     assert len(table) == 220
     assert {"person_hit_vehicle", "person_hit_vehicle_conf", "buses_being_late_note"} <= set(table.columns)
@@ -238,7 +238,7 @@ def test_keyword_query_runs_without_api_key_and_is_free(make_app):
     expected = [None if not t.strip() else int(bool(pattern.search(t))) for t in texts]
     assert labels == expected
     assert state.session_spend_usd == 0
-    assert any("Free keyword match" in i.value for i in at.info)
+    assert any("free keyword match" in i.value for i in at.caption)
     table = labeled_table(state)
     assert set(table["car_truck_bus_conf"]) <= {"1.00", ""}
 
@@ -312,3 +312,15 @@ def test_provider_choice_switches_key_status_and_runs_with_it(make_app, monkeypa
     assert any("re-checks of unsure rows" in c.value for c in at.caption)
     _click(at, "test")
     assert seen["provider"] == Provider.ANTHROPIC
+
+
+def test_no_match_yet_view_starts_full_and_shrinks_after_a_run(make_app):
+    at = _upload(make_app(api_key=None))
+    at.segmented_control(key="sidebar_view").set_value("unmatched").run()
+    assert any("212 answers" in m.value for m in at.sidebar.markdown)      # nothing run yet: every answer
+    at = _click(_add_keyword(at, "car, truck, bus"), "run")
+    matched = _state(at).full_runs[_state(at).queries[0].id].result.stats.matched
+    assert any(f"{212 - matched} answers" in m.value for m in at.sidebar.markdown)
+    assert len(_sidebar_rows(at)) == 212 - matched
+    at.selectbox(key="text_column_select").select("safety_open").run()   # other column: its own list
+    assert any(f"{220 - 26} answers" in m.value for m in at.sidebar.markdown)

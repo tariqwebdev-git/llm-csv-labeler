@@ -85,17 +85,21 @@ def run_query(
     model: str | None = None,
     cache_path: Path | None = None,
     classifier: Classifier | None = None,
+    on_recheck_progress: ProgressCallback | None = None,
 ) -> RunResult:
     """Label each text against `query_text`. Returns one RowLabel per text, same order.
 
     provider: OpenAI or Claude (default: config.PROVIDER). OpenAI's confidence comes from
     token probabilities; Claude's from its own rating plus re-checks of doubtful rows
     (confidence_check.py). Raises ApiKeyError / ApiConfigError if the run cannot continue.
+    on_progress(done, total) counts batches; on_recheck_progress(done, total) counts Claude's
+    re-check batches, which run after the first pass (only when some rows were unsure).
     `classifier` is for tests; normally one is created for the provider from api_key.
     """
     provider = provider or default_provider()
     return asyncio.run(_run_query_async(
-        texts, query_text, api_key, on_progress, provider, model or model_for(provider), cache_path, classifier
+        texts, query_text, api_key, on_progress, provider, model or model_for(provider), cache_path, classifier,
+        on_recheck_progress,
     ))
 
 
@@ -117,7 +121,7 @@ def clear_cache(cache_path: Path | None = None) -> None:
 
 
 async def _run_query_async(texts, query_text, api_key, on_progress, provider, model, cache_path,
-                           classifier) -> RunResult:
+                           classifier, on_recheck_progress=None) -> RunResult:
     started = time.perf_counter()
     prepared = prepare_rows(texts, config.MAX_ROW_CHARS)
     scored = not uses_logprobs(provider)
@@ -144,7 +148,8 @@ async def _run_query_async(texts, query_text, api_key, on_progress, provider, mo
                                                                                    save_batch)
                 labels, usage, requests_sent = output.labels, output.usage, output.requests_sent
                 if scored:
-                    labels, check_usage, check_requests = await _vote_check(client, query_text, todo_texts, labels)
+                    labels, check_usage, check_requests = await _vote_check(
+                        client, query_text, todo_texts, labels, on_recheck_progress)
                     usage, requests_sent = _add_usage(usage, check_usage), requests_sent + check_requests
                     cache.put_many({keys[todo[i]]: label for i, label in labels.items()})
             finally:
@@ -177,20 +182,27 @@ def _run_stats(row_labels: list[RowLabel], started: float, *, rows_from_cache: i
     )
 
 
-async def _vote_check(client: Classifier, query_text: str, texts: list[str],
-                      labels: dict[int, RowLabel]) -> tuple[dict[int, RowLabel], TokenUsage, int]:
+async def _vote_check(client: Classifier, query_text: str, texts: list[str], labels: dict[int, RowLabel],
+                      on_progress: ProgressCallback | None = None
+                      ) -> tuple[dict[int, RowLabel], TokenUsage, int]:
     """Ask doubtful rows again (VOTE_CHECK_ROUNDS times, shuffled so neighbours differ)
-    and combine the votes. Returns the final labels, extra token usage and requests."""
+    and combine the votes. All rounds run at the same time. Returns the final labels,
+    extra token usage and requests. on_progress(done, total) counts re-check batches."""
     doubtful = [i for i, label in labels.items() if is_doubtful(label)]
     votes: dict[int, list[RowLabel]] = {i: [] for i in doubtful}
     usage, requests = TokenUsage(), 0
-    for round_number in range(config.VOTE_CHECK_ROUNDS if doubtful else 0):
-        order = doubtful[:]
-        random.Random(round_number + 1).shuffle(order)
-        output = await BatchRunner(client, query_text, scored=True).run([texts[i] for i in order])
-        for position, label in output.labels.items():
-            votes[order[position]].append(label)
-        usage, requests = _add_usage(usage, output.usage), requests + output.requests_sent
+    if doubtful:
+        orders = []
+        for round_number in range(config.VOTE_CHECK_ROUNDS):
+            order = doubtful[:]
+            random.Random(round_number + 1).shuffle(order)
+            orders.append(order)
+        output = await BatchRunner(client, query_text, scored=True).run_rounds(
+            [[texts[i] for i in order] for order in orders], on_progress)
+        for order, round_labels in zip(orders, output.labels):
+            for position, label in round_labels.items():
+                votes[order[position]].append(label)
+        usage, requests = output.usage, output.requests_sent
     final = {i: combine_votes(label, votes[i]) if i in votes else finalize(label) for i, label in labels.items()}
     return final, usage, requests
 

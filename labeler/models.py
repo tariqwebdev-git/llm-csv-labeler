@@ -124,6 +124,14 @@ class BatchRunOutput:
 
 
 @dataclass(frozen=True)
+class BatchRoundsOutput:
+    """What BatchRunner.run_rounds returns: one {text index: RowLabel} per round, plus totals."""
+    labels: list[dict[int, RowLabel]]
+    usage: TokenUsage
+    requests_sent: int
+
+
+@dataclass(frozen=True)
 class CostEstimate:
     rows_total: int
     rows_cached: int                # rows whose text is already in the cache

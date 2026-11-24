@@ -17,7 +17,7 @@ With OpenAI, confidence comes from token logprobs: how likely the model thought 
 
 ## Recommended method (3): stated score + vote check + calibration
 1. **First pass, one call per batch as today.** Reply `id|label|score`. Anchor the scale in the prompt so it's used fully: *100 = the answer says it clearly; 75 = it's implied; 50 = can't tell*. No sampling settings (Claude Haiku 5.5 rejects `temperature`).
-2. **Re-check doubtful rows.** Rows with score under ~80 are asked 4 more times, shuffled within the batch so neighbouring rows can't sway them. Final label = majority of the 5 votes. Usually only 10–20% of rows are re-checked.
+2. **Re-check doubtful rows.** Rows with score under ~80 are asked 4 more times, shuffled within the batch so neighbouring rows can't sway them. Since v1.2.0 the 4 rounds run at the same time (`BatchRunner.run_rounds`, each round in its own batches) and the progress bar shows them. Final label = majority of the 5 votes. Usually only 10–20% of rows are re-checked.
 3. **Combine.** Confidence = vote share combined with the average stated score, mapped into 0.50–1.00 like today. A row that flip-flops always ends up low, even if it claimed to be sure.
 4. **Calibrate once.** Run on the hand-labelled `sample.csv` (`scripts/run_eval.py --provider anthropic`), measure how often each score band is actually right, and store a small mapping table in `config.py`. Then "0.80" means "about 80% of rows like this are correct".
 5. **Prove it.** On `sample.csv` (and Alex's file if available), the wrong labels must gather at the low-confidence end, because that's what Alex uses the score for. Compare side by side with OpenAI's logprob confidence.

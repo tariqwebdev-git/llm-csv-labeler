@@ -86,9 +86,9 @@ def _body(state: AppState, query: Query, api_key: str | None) -> None:
     full = state.full_runs.get(query.id)
     if full:
         _stats_box(full, keyword)
-    if ready and not editing and keyword:
+    if ready and not editing and not full and keyword:   # the estimate only matters before the first run
         st.caption("Free: keyword match, no API needed. Test and Run finish instantly.")
-    elif ready and not editing:
+    elif ready and not editing and not full:
         column = state.df[state.text_column]
         test_texts = column.iloc[pick_test_rows(len(column))].tolist()
         test_est = _estimate(f"{state.file_id}:test", state.text_column, query.text,
@@ -140,12 +140,13 @@ def _editor(state: AppState, query: Query) -> None:
 
 
 def _stats_box(run: QueryRun, keyword: bool = False) -> None:
+    """One short line after a full run: counts, notes, cost and time (keeps the card slim)."""
     stats = run.result.stats
-    notes = ", ".join(f"{count} {note}" for note, count in stats.note_counts.items()) or "none"
-    cost = (f"Free keyword match · {stats.seconds}s" if keyword else
-            f"Cost \\${stats.cost_usd:.4f} · {stats.seconds}s · {stats.rows_from_cache:,} rows from cache")
-    st.info(f"**{stats.matched:,} of {stats.rows_total:,} matched, {stats.not_labelled:,} not labelled**  \n"
-            f"Notes: {notes}  \n{cost}")
+    notes = ", ".join(f"{count} {note}" for note, count in stats.note_counts.items())
+    cost = (f"free keyword match · {stats.seconds}s" if keyword else
+            f"\\${stats.cost_usd:.4f} · {stats.seconds}s · {stats.rows_from_cache:,} rows from cache")
+    st.caption(f"**{stats.matched:,} of {stats.rows_total:,} matched, {stats.not_labelled:,} not labelled**"
+               f"{f' ({notes})' if notes else ''} · {cost}")
 
 
 def _buttons(state: AppState, query: Query, api_key: str | None, can_run: bool) -> None:
@@ -192,6 +193,8 @@ def _run(state: AppState, query: Query, api_key: str, test_only: bool) -> None:
         result = run_query(
             texts, query.text, api_key=api_key, provider=state.provider,
             on_progress=lambda done, total: bar.progress(done / total, text=f"Batches {done}/{total}"),
+            on_recheck_progress=lambda done, total: bar.progress(
+                done / total, text=f"Re-checking the rows Claude was unsure about: {done}/{total}"),
         )
     except (ApiKeyError, ApiConfigError) as exc:
         bar.empty()
@@ -207,7 +210,7 @@ def _test_preview(state: AppState, query: Query, test: QueryRun) -> None:
     matched, unmatched, not_labelled = split_test_rows(
         state.df, state.text_column, query.name, test.row_indices, test.result.labels)
     with st.expander(f"Test on {len(test.row_indices)} rows: {len(matched)} matched, "
-                     f"{len(unmatched)} not matched · cost \\${test.result.stats.cost_usd:.4f}", expanded=True):
+                     f"{len(unmatched)} not matched · cost \\${test.result.stats.cost_usd:.4f}", expanded=False):
         st.caption(READ_HINT)
         st.markdown("**Matched**")
         show_table(_by_confidence(matched, query.name), state.text_column)

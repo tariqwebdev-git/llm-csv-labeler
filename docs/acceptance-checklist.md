@@ -77,6 +77,15 @@ Default model `gpt-6-luna` (current, not deprecated as of 2026-11-05). The previ
 | Keyword queries: whole words, case ignored, OR, `*` word starts, punctuation, escaping | ✅ | `tests/test_keyword_matcher.py`; browser check = regex count |
 | White answer cells in the sidebar; match count on cards, also collapsed | ✅ | `tests/test_answer_table.py`, `test_card_header_shows_match_count_also_collapsed`; pixel check (255,255,255) |
 
+## Alex's Milestone 3 (v1.2.0, 2026-11-24)
+| Item | Status | Evidence |
+|---|---|---|
+| Claude: no silent wait after the bar fills; re-check shows progress | ✅ | `test_recheck_progress_is_reported`; live 40 rows in 2.3 s |
+| Re-check rounds run at the same time, a row never twice in one request | ✅ | `test_recheck_rounds_run_at_the_same_time`, `test_recheck_never_sends_a_row_twice_in_one_request` |
+| Slimmer cards, two columns on wide screens, results folded | ✅ | browser `check_v12` (1920 px: 2 columns, 1100 px: 1), `test_app_ui` stats caption |
+| "No match yet" view per column, shrinks after each run | ✅ | `tests/test_theme_coverage.py`, `test_no_match_yet_view_starts_full_and_shrinks_after_a_run`; browser 212 → 159 |
+| Update steps can't pick up an older zip | ✅ | `INSTALL-MAC.md` exact zip name + `ls` check; ⏳ Alex's next update |
+
 ## Open items for Alex
 1. Optional: 20 hand-labelled rows per query and an accuracy target X. We do not ask him for these unless needed.
 2. Installed (2026-11-06); first run hit the conda issue, fix sent by message, waiting for his confirmation. He then deletes the "highlighter-dev" key.
