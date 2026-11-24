@@ -38,15 +38,20 @@ def suggest_column_name(query_text: str) -> str:
     return to_column_name("_".join(keywords[:_MAX_SUGGESTED_WORDS]))
 
 
+def has_text(value: object) -> bool:
+    """True if a cell has usable text (same rule as the labeller: empty cells are skipped)."""
+    return bool(sanitize_text(str(value)))
+
+
 def count_empty(df: pd.DataFrame, column: str) -> int:
     """Rows with no usable text in `column` (same rule as the labeller: these are skipped)."""
-    return sum(1 for value in df[column] if not sanitize_text(str(value)))
+    return sum(1 for value in df[column] if not has_text(value))
 
 
 def non_empty_answers(df: pd.DataFrame, column: str) -> pd.Series:
     """The rows of `column` that have text (same rule as count_empty), with their row numbers."""
     values = df[column]
-    return values[[bool(sanitize_text(str(value))) for value in values]]
+    return values[[has_text(value) for value in values]]
 
 
 def column_with_fewest_empty(df: pd.DataFrame) -> str:

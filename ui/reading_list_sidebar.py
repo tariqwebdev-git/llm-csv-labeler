@@ -3,12 +3,15 @@
 Click the sidebar icon on a query card to see that query's rows here, matched
 rows highlighted green (plus filter buttons if config.SIDEBAR_FILTER_BUTTONS).
 The × goes back to all answers. Cells are white with dark text, for reading.
+"No match yet" lists the answers that none of this column's queries has matched,
+to spot themes still missing (only full runs count, not 20-row tests).
 """
 import streamlit as st
 
 from labeler import config
 from labeler.column_utils import non_empty_answers
 from labeler.models import Query
+from labeler.theme_coverage import unmatched_answers
 from ui.answer_table import READ_HINT, show_table, white_cells
 from ui.query_actions import find_query
 from ui.result_tables import filter_rows, query_rows
@@ -16,6 +19,8 @@ from ui.ui_models import AppState, QueryRun
 
 FILTERS = {"All": "all", "Matched": "matched", "Not matched": "not_matched", "Not labelled": "not_labelled"}
 _FILTER_KEY = "sidebar_filter"
+_VIEW_KEY = "sidebar_view"
+_ALL, _UNMATCHED = "all", "unmatched"
 
 
 def render(state: AppState) -> None:
@@ -40,11 +45,22 @@ def _query_run(state: AppState, query: Query | None) -> QueryRun | None:
 
 
 def _all_answers(state: AppState) -> None:
+    """All answers of the column, or (toggle) only those no query has matched yet."""
     answers = non_empty_answers(state.df, state.text_column)
-    shown = answers.head(config.READING_LIST_MAX_ROWS)
-    more = f" (first {len(shown):,} shown)" if len(shown) < len(answers) else ""
-    st.markdown(f"**{state.text_column}** · {len(answers):,} answers{more}")
-    st.caption(f"{READ_HINT} Click the sidebar icon on a query card to see only its rows.")
+    unmatched = unmatched_answers(state.df, state.text_column,
+                                  [run.result.labels for run in state.full_runs.values()])
+    names = {_ALL: f"All answers ({len(answers):,})", _UNMATCHED: f"No match yet ({len(unmatched):,})"}
+    view = st.segmented_control("Show", [_ALL, _UNMATCHED], format_func=names.get, default=_ALL,
+                                key=_VIEW_KEY, label_visibility="collapsed") or _ALL
+    listed = unmatched if view == _UNMATCHED else answers
+    shown = listed.head(config.READING_LIST_MAX_ROWS)
+    more = f" (first {len(shown):,} shown)" if len(shown) < len(listed) else ""
+    st.markdown(f"**{state.text_column}** · {len(listed):,} answers{more}")
+    if view == _UNMATCHED:
+        st.caption("Answers that none of this column's queries has matched yet. Only full runs count, "
+                   f"not 20-row tests. {READ_HINT}")
+    else:
+        st.caption(f"{READ_HINT} Click the sidebar icon on a query card to see only its rows.")
     show_table(white_cells(shown.to_frame()), state.text_column, height=config.READING_LIST_HEIGHT_PX,
                text_width=config.READING_LIST_TEXT_WIDTH_PX)
 

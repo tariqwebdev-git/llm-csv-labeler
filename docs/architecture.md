@@ -72,12 +72,13 @@ llm-csv-labeler/
 │   ├── row_preparer.py           # empty/trim checks, de-duplication
 │   ├── batch_planner.py          # groups rows into small batches (row count + token budget)
 │   ├── token_counter.py          # token counts (tiktoken)
-│   ├── batch_runner.py           # concurrent batches, retry/recovery, refusals
+│   ├── batch_runner.py           # concurrent batches, retry/recovery, refusals; run_rounds for re-checks
 │   ├── labeling_engine.py        # public API: estimate_cost(), run_query()
 │   ├── cost_estimator.py         # token counting, $ from estimate/usage
 │   ├── result_cache.py           # SQLite cache
 │   ├── csv_io.py                 # read (encoding/delimiter), write bytes
-│   ├── column_utils.py           # column naming, text-column detection
+│   ├── column_utils.py           # column naming, text-column detection, has_text rule
+│   ├── theme_coverage.py         # "No match yet": answers no query on a column has matched
 │   ├── output_builder.py         # insert label/conf/note columns after the text column
 │   └── query_store.py            # queries <-> JSON
 ├── scripts/

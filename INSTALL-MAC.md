@@ -139,38 +139,38 @@ If it asks for your **Email**, just press **Enter**. This only happens the first
    If your app is in another folder (for example `~/Code/llm-csv-labeler`), use that folder in the first line.
 3. The app opens in your browser.
 
-**To stop the app:** click the Terminal window and press **Ctrl+C**, or simply close the window.
+**To stop the app:** click the Terminal window and press **Control+C** (the Control key, not Command), or simply close the window.
 
 ## Getting a new version
 
 You don't need to install everything again. Your key, your saved results and the installed packages stay where they are.
 
-**What's new in this version**
-- **Keyword queries:** a second tab, **New Keyword Query**. Type words separated by commas (e.g. *car, truck, bus*); a row matches if it contains any of them as whole words, upper/lower case ignored. A **\*** at the end matches word starts: *respect\** finds respect, respects, respected and respecting. Free, instant, no API key needed.
-- **Each text column has its own queries and results.** Switch columns and back, and nothing is lost.
-- **See one query's rows in the sidebar:** click the sidebar icon on a card; its matched rows are highlighted in green.
-- **Number of matches on each card**, also when it's collapsed (e.g. *traffic_accidents: 45 matches*).
-- **White cells in the sidebar**, for easier reading.
-- **Claude as an option:** add `ANTHROPIC_API_KEY=` with your Claude key to `.env` (open it with `open -e .env`), restart, then pick **Claude** in the gear menu. Claude's confidence comes from its own rating plus re-checks of the rows it's unsure about.
+**What's new in this version (1.2.0)**
+- **Query cards side by side:** on a wide screen the cards sit in two columns, and they are slimmer. Test results stay folded until you click them; the sidebar icon on a card shows its rows.
+- **No match yet:** at the top of the sidebar, switch from **All answers** to **No match yet** to see the answers that none of this column's queries has matched. It starts with every answer and shrinks after each run, so you can spot themes you haven't covered. (Only full runs count, not 20-row tests.)
+- **Claude runs finish sooner and show what they're doing:** after the bar fills, it now says *Re-checking the rows Claude was unsure about* while it double-checks them, and those re-checks run at the same time.
 
 **How to update**
-1. Stop the app: click the Terminal window and press **Ctrl+C**.
-2. Put the new zip in your **Downloads** folder (no need to unzip it).
-3. Paste these lines one at a time and press Enter after each:
+1. Stop the app: click the Terminal window running it and press **Control+C** (the Control key, not Command). Close that Terminal window and the app's browser tab.
+2. Put the new zip, **llm-csv-labeler-v1.2.0.zip**, in your **Downloads** folder (no need to unzip it).
+3. Open a new Terminal window. Paste these lines one at a time and press Enter after each:
    ```
-   cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'
+   cd ~/Downloads
+   rm -rf llm-csv-labeler
+   unzip -o llm-csv-labeler-v1.2.0.zip
    cd ~/Code/llm-csv-labeler
    ditto ~/Downloads/llm-csv-labeler .
-   rm -rf ~/Downloads/llm-csv-labeler
+   ls labeler/theme_coverage.py
    uv pip install --python .venv -r requirements.txt
    .venv/bin/python -m streamlit run app.py
    ```
-   - The second line goes to the folder where your app is. If you installed it in **Documents** (Step 1), use `cd ~/Documents/llm-csv-labeler` instead.
-   - The third line copies the new files over the old ones (the `.` means "this folder"). Your `.env` key, your saved results and the installed packages are kept.
-   - If Safari already unzipped the file (there's a `llm-csv-labeler` folder in Downloads), skip the first line.
-   - The `rm` line only removes the unzipped copy in Downloads.
+   - The second line removes any copy left over from an earlier update, and the third unpacks **only** the new zip (older zips in Downloads are ignored).
+   - The fourth line goes to the folder where your app is. If you installed it in **Documents** (Step 1), use `cd ~/Documents/llm-csv-labeler` instead.
+   - The fifth line copies the new files over the old ones (the `.` means "this folder"). Your `.env` key, your saved results and the installed packages are kept.
+   - The `ls` line is a check: it should print `labeler/theme_coverage.py`. If it says "No such file", the new files were not copied: check the zip's name in Downloads and repeat from the first line.
+   - If Safari already unzipped the file (there's a `llm-csv-labeler` folder in Downloads but no zip), skip the second and third lines.
 
-✅ **You should see:** the app opens as usual, with the new layout. The install line finishes in a few seconds and only lists packages that changed (or says everything is already installed).
+✅ **You should see:** the app opens as usual. At the top of the sidebar there are two buttons, **All answers** and **No match yet**.
 
 ---
 
@@ -184,14 +184,14 @@ You don't need to install everything again. Your key, your saved results and the
 | `command not found: uv` | Close Terminal completely (Cmd+Q) and open it again. If it still appears, paste `source $HOME/.local/bin/env` and try again. |
 | `No such file or directory` or `File not found: requirements.txt` | Terminal is not in the project folder. Repeat Step 4; `ls` must show `app.py`. |
 | An error during Step 5 | Check your internet connection and paste the same command again. It's safe to repeat. |
-| A yellow warning says **"The app is not running from its own environment"**, or an error like `process() takes no keyword arguments` | The app was started with another Python (often conda's `(base)`). Stop it (Ctrl+C) and start it with the Step 7 command: `.venv/bin/python -m streamlit run app.py`. If the error stays, rebuild the environment: paste `rm -rf .venv`, repeat Step 5, then Step 7. |
+| A yellow warning says **"The app is not running from its own environment"**, or an error like `process() takes no keyword arguments` | The app was started with another Python (often conda's `(base)`). Stop it (Control+C) and start it with the Step 7 command: `.venv/bin/python -m streamlit run app.py`. If the error stays, rebuild the environment: paste `rm -rf .venv`, repeat Step 5, then Step 7. |
 | `.venv/bin/python: No such file or directory` | Step 5 wasn't finished in this folder. Repeat Step 4 and Step 5. |
 | Terminal asks for an **Email** | Press Enter. It's optional. |
-| **API key missing** (red box at the top) | The `.env` file is missing or the key wasn't saved. Repeat Step 6, then stop the app (Ctrl+C) and start it again (Step 7). |
+| **API key missing** (red box at the top) | The `.env` file is missing or the key wasn't saved. Repeat Step 6, then stop the app (Control+C) and start it again (Step 7). |
 | **OpenAI rejected the API key** | The key was mistyped or deleted. Paste it again (Step 6), or create a new key in your OpenAI account. Then restart the app. |
 | Every row is marked **failed** | Your OpenAI account may be out of credit or at its spending limit. Check **Billing** on the OpenAI website, then click **Run** again. Only the failed rows are re-sent. |
 | The app suddenly stopped working | The Terminal window was closed. Start the app again (see "Every day after that"). |
 | Strange characters when opening the result in Excel | Open the downloaded CSV with a double-click instead of using Excel's import. |
-| Something else | Stop the app (Ctrl+C), start it again (Step 7), and refresh the browser. |
+| Something else | Stop the app (Control+C), start it again (Step 7), and refresh the browser. |
 
 For how to use the app and write good queries, see [README.md](README.md).
