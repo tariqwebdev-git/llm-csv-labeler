@@ -16,6 +16,7 @@ from labeler.batch_planner import plan_batches
 from labeler.errors import ApiCallError
 from labeler.models import (
     BatchLabelledCallback,
+    BatchRoundsOutput,
     BatchRunOutput,
     Classifier,
     LLMReply,
@@ -56,11 +57,30 @@ class BatchRunner:
         on_batch_labelled: BatchLabelledCallback | None = None,
     ) -> BatchRunOutput:
         """Label every text. Returns {text_index: RowLabel} and total token usage."""
-        batches = plan_batches(texts, max_rows=self._batch_size)
-        labels: dict[int, RowLabel] = {}
-        done = 0
+        output = await self.run_rounds([texts], on_progress, on_batch_labelled)
+        return BatchRunOutput(labels=output.labels[0], usage=output.usage, requests_sent=output.requests_sent)
 
-        async def run_batch(indices: list[int]) -> None:
+    async def run_rounds(
+        self,
+        rounds: list[list[str]],
+        on_progress: ProgressCallback | None = None,
+        on_batch_labelled: BatchLabelledCallback | None = None,
+    ) -> BatchRoundsOutput:
+        """Label several lists of texts at the same time, under one concurrency limit.
+
+        Each round is split into its own batches, so a text never appears twice in one
+        request (the Claude re-check asks the same rows several times; see
+        labeling_engine._vote_check). Returns one {text_index: RowLabel} per round.
+        """
+        results: list[dict[int, RowLabel]] = [{} for _ in rounds]
+        jobs = [(texts, indices, labels)
+                for texts, labels in zip(rounds, results)
+                for indices in plan_batches(texts, max_rows=self._batch_size)]
+        done, total = 0, len(jobs)
+        if on_progress and total:
+            on_progress(0, total)
+
+        async def run_batch(texts: list[str], indices: list[int], labels: dict[int, RowLabel]) -> None:
             nonlocal done
             batch_labels = await self._label_group(texts, indices, allow_halving=True)
             labels.update(batch_labels)
@@ -68,9 +88,9 @@ class BatchRunner:
                 on_batch_labelled(batch_labels)
             done += 1
             if on_progress:
-                on_progress(done, len(batches))
+                on_progress(done, total)
 
-        tasks = [asyncio.create_task(run_batch(b)) for b in batches]
+        tasks = [asyncio.create_task(run_batch(*job)) for job in jobs]
         try:
             await asyncio.gather(*tasks)
         except BaseException:
@@ -79,7 +99,7 @@ class BatchRunner:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             raise
-        return BatchRunOutput(labels=labels, usage=self._usage, requests_sent=self._requests_sent)
+        return BatchRoundsOutput(labels=results, usage=self._usage, requests_sent=self._requests_sent)
 
     async def _label_group(self, texts: list[str], indices: list[int], allow_halving: bool) -> dict[int, RowLabel]:
         reply = await self._send([texts[i] for i in indices])

@@ -86,7 +86,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--key-column", default="expected_hit_by_vehicle")
     parser.add_argument("--estimate-only", action="store_true", help="show cost, do not call the API")
     parser.add_argument("--provider", choices=[p.value for p in Provider], default=config.PROVIDER,
-                        help="openai or anthropic (Claude: labels without a confidence score for now)")
+                        help="openai or anthropic (Claude: confidence from its own rating plus re-checks of unsure rows)")
     return parser.parse_args()
 
 

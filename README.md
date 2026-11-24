@@ -18,12 +18,14 @@ cp .env.example .env && open -e .env                  # paste your key after OPE
 Next time, you only need the `cd` line and `.venv/bin/python -m streamlit run app.py`. These commands always use the project's own `.venv`, so an active conda `(base)` can't interfere.
 
 ## Updating to a new version
-Your `.venv`, `.env` key and `cache.db` (saved results) stay in place. Only the app files are replaced, and only changed packages are downloaded. Stop the app first (Ctrl+C), then, with the new zip in Downloads:
+Your `.venv`, `.env` key and `cache.db` (saved results) stay in place. Only the app files are replaced, and only changed packages are downloaded. Stop the app first (Control+C in its Terminal, then close that window), then, with the new zip in Downloads:
 ```bash
-cd ~/Downloads && unzip -o 'llm-csv-labeler-v*.zip'      # makes ~/Downloads/llm-csv-labeler
+cd ~/Downloads
+rm -rf llm-csv-labeler                                  # any copy left from an earlier update
+unzip -o llm-csv-labeler-v1.2.0.zip                     # the exact name: older zips are ignored
 cd ~/Code/llm-csv-labeler                               # your app folder (e.g. ~/Documents/llm-csv-labeler)
 ditto ~/Downloads/llm-csv-labeler .                     # copies the new files over the old ones
-rm -rf ~/Downloads/llm-csv-labeler                      # tidy up, ready for next time
+ls labeler/theme_coverage.py                            # check: prints the file name in 1.2.0
 uv pip install --python .venv -r requirements.txt       # only changed packages
 .venv/bin/python -m streamlit run app.py
 ```
@@ -40,10 +42,11 @@ The top bar stays in view: the file and text column on the left, the API key sta
    - **New Keyword Query:** type words separated by commas, for example *car, truck, bus, respect\**. A row matches if it contains any of them, as whole words, with upper/lower case ignored: "car" matches "Car", "car." and "car's" but not "scar" or "carpet". A **\*** at the end of a word matches every word that starts with it: *respect\** matches respect, respects, respected and respecting. Keyword queries are free and instant and need no API key; their confidence is always 1.00.
 
    A short column name is suggested, and you can edit it. Click **Add** and the query becomes a **card**.
-4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost. If the results look wrong, click **Edit**, reword the query and test again.
-5. **Run** labels every row. A progress bar shows the batches. The card then shows "X of Y matched, Z not labelled".
-6. **Add more queries** as needed. Each one gets its own card and its own columns. The card header shows the number of matches (e.g. *traffic_accidents: 45 matches*), also when the card is collapsed: click the arrow next to its name to collapse it to one line.
+4. **Test (20 rows)** shows which rows matched and which didn't, with confidence and cost (click the result line to open it). If the results look wrong, click **Edit**, reword the query and test again.
+5. **Run** labels every row. A progress bar shows the batches; with Claude it then shows *Re-checking the rows Claude was unsure about* while those rows are asked again. The card then shows one line: "X of Y matched, Z not labelled", the cost and the time.
+6. **Add more queries** as needed. Each one gets its own card and its own columns. The card header shows the number of matches (e.g. *traffic_accidents: 45 matches*), also when the card is collapsed: click the arrow next to its name to collapse it to one line. On a wide screen the cards sit in two columns (change `36rem` in `ui/page_style.css` to adjust when the second column appears).
 7. **See a query's rows in the sidebar:** click the sidebar icon on the right of a card (after a Test or Run). The sidebar then lists that query's rows with its label and confidence, with the matched rows highlighted in green. Click × to go back to all answers. (To get filter buttons instead, All / Matched / Not matched / Not labelled, set `SIDEBAR_FILTER_BUTTONS = True` in `labeler/config.py`.) Answers in the sidebar sit on white cells, for easy reading.
+   **No match yet:** above the list, switch from **All answers** to **No match yet** to see the answers that none of this column's queries has matched, to spot themes you haven't covered yet. It starts with every answer and shrinks after each run (only full runs count, not 20-row tests).
 8. **Download CSV** gives the original file with 3 columns per finished query. Each query's columns sit right after the text column it was run on, including queries on other columns.
 9. **Save queries** (`.json`) saves the queries of the current column, to reuse them on a new CSV; **Load queries** brings them back into the current column. Loaded queries never run by themselves.
 
@@ -111,7 +114,7 @@ The model instructions are in `labeler/prompt_builder.py` (`SYSTEM_PROMPT`). Cha
 | "OpenAI rejected the API key" | The key is wrong or was deleted. Create a new one in your OpenAI account |
 | Rows marked `failed` / rate-limit errors | Lower `MAX_CONCURRENT` in `config.py`, then Run again. Only failed rows are re-sent |
 | Blank page / the app won't load | Refresh, or open `http://localhost:8501` yourself. Try a private window (Cmd+Shift+N): if it works there, a browser extension is blocking it, so turn it off for `localhost`. Check that Terminal is still open. More fixes in "If something goes wrong" in INSTALL-MAC.md |
-| An error after updating the code | Stop the app (Ctrl+C in Terminal) and run `.venv/bin/python -m streamlit run app.py` again. A browser refresh isn't enough |
+| An error after updating the code | Stop the app (Control+C in Terminal) and run `.venv/bin/python -m streamlit run app.py` again. A browser refresh isn't enough |
 | "This app needs Python 3.12 or newer" | The app was started with an older Python (for example conda's, or the Mac's own). Start it with `.venv/bin/python -m streamlit run app.py`. If `.venv` is missing, run the Setup commands again |
 | Install fails / "requires a different Python" | Delete the `.venv` folder and run `uv venv --python 3.12` and `uv pip install --python .venv -r requirements.txt` again |
 | Terminal shows `(base)` (conda is active) | That's fine if you use the commands above exactly: they always use the project's own `.venv`. Don't type `pip install`, `uv run` or `streamlit run` on their own, because with conda active they use conda's Python and its old packages. To switch conda off for the current window, run `conda deactivate` |
